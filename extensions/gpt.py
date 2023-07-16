@@ -5,9 +5,6 @@ import time
 import tiktoken
 import requests
 from langdetect import detect
-import urllib
-
-import client as client
 
 
 class GPT:
@@ -15,6 +12,7 @@ class GPT:
         self.token = api_token
         self.ver = api_ver
         self.log = log
+        self.deepl_token = deepl_token
 
         self.enc = tiktoken.get_encoding("gpt2")
         self.translator = deepl.Translator(deepl_token)
@@ -37,7 +35,7 @@ class GPT:
         self.chat = [{"role": "system", "content": open(self.prompt).read()}]
         self.users = {}
 
-        return
+        return None
 
     def help(self) -> None:
         a = f"""Привет! Я Алиса, ваш ИИ-помощник. Чтобы меня вызвать, просто тагните и напишите ваш запрос -- я отвечу! 
@@ -51,17 +49,33 @@ class GPT:
 
         return a
 
-    def tokenize(self, messages):
+    def tokenize(self, messages) -> int:
         total_tokens = 0
         for message in messages:
             tokens = self.enc.encode((message["content"]))
             total_tokens += len(tokens)
         return total_tokens
 
-    def translate(self, request):
+    def translate(self, request) -> str:
         self.log("info", "Translating...")
-        text = self.translator.translate_text(request, target_lang="RU")
-        return text.text
+        url = "https://api.deepl.com/v2/translate"
+
+        # API parameters
+        params = {
+            "auth_key": self.deepl_token,  # Replace with your DeepL API authentication key
+            "text": request,
+            "target_lang": "RU",
+        }
+
+        try:
+            response = requests.post(url, params=params)
+            response.raise_for_status()
+            result = response.json()
+            translated_text = result["translations"][0]["text"]
+            return translated_text
+        except requests.exceptions.RequestException as e:
+            print("Error:", e)
+            return None
 
     def gen(self, type, request) -> str:
         with open(os.path.join(self.prompts_dir, f"{type}prompt.txt"), "r") as file:
@@ -146,7 +160,7 @@ class GPT:
         if len(kwargs) == 0:
             self.chat = [{"role": "system", "content": open(self.prompt).read()}]
             self.log("AL!CE reloaded", time.time())
-            return 0
+            return None
         try:
             ver, prompt = kwargs.values()
             self.defprompt = prompt
@@ -161,10 +175,10 @@ class GPT:
                     self.ver = "4"
                 else:
                     self.log("warn", f"Exception! Model {ver} does not exist!")
-                    return 0
+                    return None
             except:
                 self.log("warn", f"Exception! Prompt {prompt} does not exist!")
-                return 0
+                return None
         except:
             if "ver" not in kwargs.keys():
                 prompt = kwargs.values()
@@ -179,7 +193,7 @@ class GPT:
                     ]
                 except:
                     self.log("warn", f"Exception! Prompt {prompt} does not exist!")
-                    return 0
+                    return None
             else:
                 ver = kwargs.values()
                 prompt = self.prompt
@@ -191,9 +205,9 @@ class GPT:
                     self.ver = "4"
                 else:
                     self.log("info", f"Exception! Model {ver} does not exist!")
-                    return 0
+                    return None
         self.log("info", f"Successfully switched to prompt {prompt} and gpt-ver {ver}!")
-        return 0
+        return None
 
     def add_prompt(self, name: str, prompt: str) -> None:  # Добавляет промпт в файл
         with open(os.path.join(self.prompts_dir, f"{name}.txt"), "w") as file:
