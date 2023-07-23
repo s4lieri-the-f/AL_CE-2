@@ -27,6 +27,9 @@ class Client:
         print(self.ext)
 
         # opening a new .log file, writing into it first line, then use for it log() method
+        if "logs" not in os.listdir():
+            os.mkdir("logs")
+
         if "current.log" in os.listdir("logs"):
             os.rename("logs/current.log", f'logs/prev{len(os.listdir("logs"))}.log')
         with open("logs/current.log", "w") as FILE:
