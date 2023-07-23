@@ -4,6 +4,9 @@ import configparser
 import os
 from datetime import datetime as dt
 
+# ДИТЯ ДЬЯВОЛА
+import asyncio
+
 
 class Client:
     def __init__(self) -> None:
@@ -11,36 +14,43 @@ class Client:
         config = configparser.ConfigParser()
         config.read("assets/config.ini")
         self.name = config["INFO"]["name"]
+        self.prefix = config["INFO"]["prefix"]
         self.vk_ver = config["VK"]["vk_ver"]
         self.album_id = config["VK"]["album_id"]
         self.logon = config["VK"]["login"]
         self.passw = config["VK"]["passw"]
         self.token = config["VK"]["token"]
+        self.conversations = loads(config["VK"]["conversations"])
 
         # loading extension variables for CAME
-        self.ext = config["EXTENSIONS"]
+        self.ext = dict(config["EXTENSIONS"])
+        print(self.ext)
 
         # opening a new .log file, writing into it first line, then use for it log() method
         if "current.log" in os.listdir("logs"):
             os.rename("logs/current.log", f'logs/prev{len(os.listdir("logs"))}.log')
         with open("logs/current.log", "w") as FILE:
             FILE.write(
-                f"[{dt.now()} | INFO] Starting {self.name} instance via external call."
+                f'[{dt.now()} | INFO] Starting {self.name} instance via external call.\n\t\tCommand prefix is "{self.prefix}"'
             )
 
-        # check if token is expired or incorrect
-        if "error" in self.get_self().keys():
-            self.log(
-                "error",
-                f"""Token is incorrect or expired, trying to get new.
-                            Login: {self.logon}
-                            Password: {self.passw}""",
-            )
-
-            # getting new using credentials from setup
+        # getting new using credentials from setup
+        if not self.token:
             self.token = self.login()
             config["VK"]["token"] = self.token
-            config.write(open("assets/key/config.ini", "w"))
+            config.write(open("assets/config.ini", "w"))
+
+        # finally logging
+        log_message = f"""
+        {self.name} variables are:
+                VK API ver.: {self.vk_ver}
+                Login: {self.logon}
+                Password: {self.passw}
+                Token: {self.token}
+                Prefix: {self.prefix}
+                Album ID: {self.album_id}
+                Conversation ID's: {self.conversations}"""
+        asyncio.create_task(log("info", log_message))
 
     def login(self) -> str:
         # Connecting to VK bot, logging in using
@@ -58,15 +68,12 @@ class Client:
             ).content
         )
 
-        if "access_token" not in token.keys():
-            self.log("fatal error", f"{token['error']['error_msg']}")
-
         return token["access_token"]
 
     def refresh(self, chats: list) -> list:
         link = "https://api.vk.com/method/messages.getHistory"
 
-        messages = []
+        messages = {}
         for chat in chats:
             data = {
                 "peer_id": chat,
@@ -74,11 +81,13 @@ class Client:
                 "v": self.vk_ver,
                 "access_token": self.token,
             }
-            messages.append(loads(requests.post(link, data=data).content))
+            messages[chat] = loads(requests.post(link, data=data).content)["response"][
+                "items"
+            ]
 
         return messages
 
-    def send_message(self, message: str, where: int, image=None) -> None:
+    def send_message(self, message: str, where: int, image=None, reply=None) -> None:
         link = "https://api.vk.com/method/messages.send"
         data = {
             "peer_id": where,
@@ -87,11 +96,12 @@ class Client:
             "access_token": self.token,
             "v": self.vk_ver,
         }
+        if reply:
+            data["reply_to"] = reply
 
         if image:
             data["attachment"] = self.save_image(image)
         requests.post(link, data=data)
-        self.log("info", f"Successfully sent message to {where} conf.")
 
     def save_image(self, path_to_image: str) -> str:
         link = "https://api.vk.com/method/photos.getUploadServer"
@@ -118,10 +128,6 @@ class Client:
         }
 
         photo_id = loads(requests.post(link, data).content)
-        self.log(
-            "info",
-            f"Uploaded an image, id: {'photo' + str(photo_id['response'][0]['owner_id']) + '_' + str(photo_id['response'][0]['id'])}",
-        )
         return (
             "photo"
             + str(photo_id["response"][0]["owner_id"])
@@ -141,10 +147,6 @@ class Client:
         }
 
         result = loads(requests.post(link, data=data).content)
-        self.log(
-            "info",
-            f"Posted here: {'https://vk.com/w='+'-'+str(id)+'_'+str(result['response']['post_id'])}",
-        )
         return (
             "https://vk.com/w="
             + "-"
@@ -154,13 +156,31 @@ class Client:
         )
 
     def get_self(self) -> str:
-        link = "https://api.vk.com/method/account.getProfileInfo"
+        link1 = "https://api.vk.com/method/account.getProfileInfo"
+        link2 = "https://api.vk.com/method/messages.getConversations"
+        link3 = "https://api.vk.com/method/messages.getConversationsById"
         data = {"access_token": self.token, "v": self.vk_ver}
 
-        return loads(requests.post(link, data=data).content)
+        self_data = loads(requests.post(link1, data=data).content)
+        conversations = loads(
+            requests.post(link2, data={**data, "filter": "all"}).content
+        )
 
-    def log(self, t: str, e: str) -> None:
-        with open(f"logs/current.log", "a") as FILE:
-            FILE.write(f"\n[{dt.now()} | {t.upper()}] " + e)
+        self_conversations = {}
+        for conf in conversations["response"]["items"]:
+            name = loads(
+                requests.post(
+                    link3, data={**data, "peer_ids": conf["conversation"]["peer"]["id"]}
+                ).content
+            )
+            print(name)
 
-    # def roll():
+        # response, items
+
+        return {**self_data, **self_conversations}
+
+
+async def log(itype: str, text: str) -> None:
+    with open("logs/current.log", "a", encoding="utf-8") as FILE:
+        FILE.write(f"\n[{dt.now()} | {itype.upper()}] {text}")
+    return
