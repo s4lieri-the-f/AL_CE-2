@@ -119,7 +119,7 @@ async def update_incoming_messages(client: Client) -> None:
                         asyncio.create_task(
                             log(
                                 "error",
-                                f"No handler found for command \"{command}\". Args are: [{', '.join(args)}]. Ignoring.",
+                                f"No handler found for command \"{command}\". Args are: [{', '.join(args)}]. Trying to use an activator.",
                             )
                         )
                     else:
@@ -131,9 +131,7 @@ async def update_incoming_messages(client: Client) -> None:
                         )
                         try:
                             asyncio.create_task(
-                                globals()[commands[command]].handle(
-                                    msg["from_id"], command, client, args
-                                )
+                                globals()[commands[command]].handle(msg, client)
                             )
                         except Exception as e:
                             asyncio.create_task(
