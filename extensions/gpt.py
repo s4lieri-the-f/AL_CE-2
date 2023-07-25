@@ -201,7 +201,7 @@ class GPT:
                 asyncio.create_task(
                     self.log(
                         "warn",
-                        f"There is no such prompt {prompt}. Doing nothing.",
+                        f"There is no such prompt {prompt}. Doing nothing. Exact path to the prompt:\n\t\t{self.prompt}",
                     )
                 )
                 return None

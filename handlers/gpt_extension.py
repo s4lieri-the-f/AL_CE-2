@@ -65,7 +65,7 @@ async def handle(msg: dict, client: Client) -> None:
         elif command == "sysprompt":
             name = request[0]
             prompt = " ".join(request[1:])
-            client.gpt_client.addprompt(name, prompt)
+            client.gpt_client.add_prompt(name, prompt)
         elif command == "help":
             client.send_message(client.gpt_client.help(), peer_id, reply=reply_id)
 
