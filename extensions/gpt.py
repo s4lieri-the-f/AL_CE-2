@@ -6,6 +6,9 @@ import tiktoken
 import requests
 from langdetect import detect
 
+# дитя дьявола
+import asyncio
+
 
 class GPT:
     def __init__(self, api_token: str, api_ver: str, deepl_token: str, log) -> None:
@@ -23,7 +26,6 @@ class GPT:
             os.path.join(
                 os.path.dirname(os.path.realpath(__file__)),
                 "..",
-                "..",
                 "assets",
                 "extensions",
                 "prompts",
@@ -38,12 +40,14 @@ class GPT:
         return None
 
     def help(self) -> None:
-        a = f"""Привет! Я Алиса, ваш ИИ-помощник. Чтобы меня вызвать, просто тагните и напишите ваш запрос -- я отвечу! 
+        a = f"""Привет! Я Алиса, ваш ИИ-помощник. Чтобы меня вызвать, введите префикс - сейчас это ~ - и одну из команд ниже.
                     Я сохраняю контекст до четырех тысяч токенов -- это примерно 8 тысяч символов. Контекст тратит и запрос, и ответ, так что аккуратнее! 
-                    Вот команды, которые вы можете использовать, чтобы изменить контекст или начало. Все команды пишутся после тега без особых символов: 
-                    flush <n> - удаляет первые n сообщений из контекста. 
-                    sysprompt <prompt_name (1 слово!)> <prompt> -- позволяет вгноять и использовать пользовательские промпты по ключу.
-                    reboot <name> - полностью удаляет контекст, оставляя системный промпт (если оставить имя пустым) или меняя его. Список доступных имен: \n"""
+                    Четвертая модель сохраняет до 8 тысяч, но она очень дорогая, аккуратно! 
+                    Вот команды, которые вы можете использовать:
+                    answer <запрос> - вызывает меня для ответа.
+                    gen <тип> <запрос> - команда для генерации данных по запросу. Пока что используется только для Slayers. 
+                    sysprompt <prompt_name (1 слово!)> <prompt> -- позволяет вгноять и использовать пользовательские промпты по ключу. Не используйте цифры в названии промптов!
+                    reboot <name> <ver> - полностью удаляет контекст, оставляя системный промпт (если оставить имя пустым) или меняя его, а также может сменить версию модели.. Список доступных имен: \n"""
         for key in os.listdir(self.prompts_dir):
             a += "\t • " + key[:-4] + "\n"
 
@@ -57,8 +61,7 @@ class GPT:
         return total_tokens
 
     def translate(self, request) -> str:
-        self.log("info", "Translating...")
-        url = "https://api.deepl.com/v2/translate"
+        url = "https://api-free.deepl.com/v2/translate"
 
         # API parameters
         params = {
@@ -74,7 +77,12 @@ class GPT:
             translated_text = result["translations"][0]["text"]
             return translated_text
         except requests.exceptions.RequestException as e:
-            print("Error:", e)
+            asyncio.create_task(
+                self.log(
+                    "error",
+                    f"DeepL error. Dunno.",
+                )
+            )
             return None
 
     def gen(self, type, request) -> str:
@@ -122,7 +130,6 @@ class GPT:
         n = self.maxtokens - self.tokenize(self.chat)
         while True:
             try:
-                self.log("info", f"USING {n} TOKENS FOR RESPONSE.")
                 headers = {
                     "Content-Type": "application/json",
                     "Authorization": f"Bearer {self.token}",  # Replace with your actual API key
@@ -144,7 +151,12 @@ class GPT:
                 result = response.json()
                 break
             except Exception as e:
-                self.log("warn", f"AL!CE CAUGHT AN ERROR: {e}. CLEARING HISTORY...")
+                asyncio.create_task(
+                    self.log(
+                        "error",
+                        f"GPT cought an error: {e}. Breaking.",
+                    )
+                )
                 self.chat.pop(1)
                 n = self.maxtokens - self.tokenize(self.chat)
 
@@ -153,20 +165,29 @@ class GPT:
 
         if detect(ai_answer) == "en":
             ai_answer = f"[AL!CE]:{self.translate(ai_answer)}"  # Автоперевод на русский
-        self.log("info", f"tokens left: {self.maxtokens - self.tokenize(self.chat)}")
+        asyncio.create_task(
+            self.log(
+                "info", f"tokens left: {self.maxtokens - self.tokenize(self.chat)}"
+            )
+        )
         return ai_answer
 
     def reconfigure(self, **kwargs) -> None:  # даже блядь не пытайся
         if len(kwargs) == 0:
             self.chat = [{"role": "system", "content": open(self.prompt).read()}]
-            self.log("AL!CE reloaded", time.time())
+            asyncio.create_task(self.log("info", f"GPT instance reloaded."))
             return None
         try:
             ver, prompt = kwargs.values()
             self.defprompt = prompt
             try:
                 self.prompt = os.path.join(self.prompts_dir, f"{self.defprompt}.txt")
-                self.chat = [{"role": "system", "content": open(self.prompt).read()}]
+                self.chat = [
+                    {
+                        "role": "system",
+                        "content": open(self.prompt, "r", encoding="utf-8").read(),
+                    }
+                ]
                 if ver == "3":
                     self.maxtokens = 4080
                     self.ver = "3"
@@ -174,10 +195,20 @@ class GPT:
                     self.maxtokens = 8180
                     self.ver = "4"
                 else:
-                    self.log("warn", f"Exception! Model {ver} does not exist!")
+                    asyncio.create_task(
+                        self.log(
+                            "warn",
+                            f"GPT model {ver} does not exist. Doing nothing.",
+                        )
+                    )
                     return None
             except:
-                self.log("warn", f"Exception! Prompt {prompt} does not exist!")
+                asyncio.create_task(
+                    self.log(
+                        "warn",
+                        f"There is no such prompt {prompt}. Doing nothing. Exact path to the prompt:\n\t\t{self.prompt}",
+                    )
+                )
                 return None
         except:
             if "ver" not in kwargs.keys():
@@ -192,7 +223,12 @@ class GPT:
                         {"role": "system", "content": open(self.prompt).read()}
                     ]
                 except:
-                    self.log("warn", f"Exception! Prompt {prompt} does not exist!")
+                    asyncio.create_task(
+                        self.log(
+                            "warn",
+                            f"There is no such prompt {prompt}. Doing nothing.",
+                        )
+                    )
                     return None
             else:
                 ver = kwargs.values()
@@ -204,9 +240,18 @@ class GPT:
                     self.maxtokens = 8180
                     self.ver = "4"
                 else:
-                    self.log("info", f"Exception! Model {ver} does not exist!")
+                    asyncio.create_task(
+                        self.log(
+                            "warn",
+                            f"GPT model {ver} does not exist. Doing nothing.",
+                        )
+                    )
                     return None
-        self.log("info", f"Successfully switched to prompt {prompt} and gpt-ver {ver}!")
+        asyncio.create_task(
+            self.log(
+                "info", f"Successfully switched to prompt {prompt} and gpt-ver {ver}!"
+            )
+        )
         return None
 
     def add_prompt(self, name: str, prompt: str) -> None:  # Добавляет промпт в файл

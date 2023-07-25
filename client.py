@@ -73,6 +73,20 @@ class Client:
 
         return token["access_token"]
 
+    def get_user(self, from_id: int) -> str:
+        name = loads(
+            requests.post(
+                f"https://api.vk.com/method/users.get",
+                {
+                    "v": self.vk_ver,
+                    "access_token": self.token,
+                    "user_ids": [from_id],
+                    "name_case": "nom",
+                },
+            ).content
+        )["response"][0]
+        return name["first_name"] + " " + name["last_name"]
+
     def refresh(self, chats: list) -> list:
         link = "https://api.vk.com/method/messages.getHistory"
 
@@ -84,13 +98,24 @@ class Client:
                 "v": self.vk_ver,
                 "access_token": self.token,
             }
-            messages[chat] = loads(requests.post(link, data=data).content)["response"][
-                "items"
-            ]
 
+            messages[chat] = loads(requests.post(link, data=data).content)
+            if "response" not in messages[chat].keys():
+                asyncio.create_task(
+                    log(
+                        "error",
+                        f"Something went wrong while fetching conversations. Exactly:\n\t\t{messages[chat]}",
+                    )
+                )
+                return
+            else:
+                messages[chat] = messages[chat]["response"]["items"]
         return messages
 
     def send_message(self, message: str, where: int, image=None, reply=None) -> None:
+        asyncio.create_task(
+            log("info", f"Sending message to {where} conf. Text:\n\t\t{message}")
+        )
         link = "https://api.vk.com/method/messages.send"
         data = {
             "peer_id": where,
@@ -104,7 +129,14 @@ class Client:
 
         if image:
             data["attachment"] = self.save_image(image)
-        requests.post(link, data=data)
+        r = loads(requests.post(link, data=data).content.decode())
+        if "error" in r.keys():
+            asyncio.create_task(
+                log(
+                    "error",
+                    f"Caught an error while trying to send message. Specificaly:\n\t\t{r['error']['error_code']}: {r['error']['error_msg']}",
+                )
+            )
 
     def save_image(self, path_to_image: str) -> str:
         link = "https://api.vk.com/method/photos.getUploadServer"
