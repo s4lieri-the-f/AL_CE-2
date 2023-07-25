@@ -51,7 +51,10 @@ async def handle(msg: dict, client: Client) -> None:
                 ver = "4"
             else:
                 ver = "3"
-            prompt = request[1]
+            try:
+                prompt = request[1]
+            except:
+                prompt = request[0]
             client.gpt_client.reconfigure(ver=ver, prompt=prompt)
             asyncio.create_task(
                 log(
