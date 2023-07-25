@@ -47,19 +47,16 @@ async def handle(msg: dict, client: Client) -> None:
         elif command == "reboot":
             if len(request) < 3:
                 client.gpt_client.reconfigure()
-            if " 4 " in " ".join(request):
+            if "4" in request:
                 ver = "4"
             else:
                 ver = "3"
-            try:
-                prompt = request[1]
-            except:
-                prompt = request[0]
+            prompt = request[1] if len(request) >= 2 else request[0]
             client.gpt_client.reconfigure(ver=ver, prompt=prompt)
             asyncio.create_task(
                 log(
                     "info",
-                    f"GPT was reconifgured. Current settings:\n\t\tver.: {ver}\n\t\tPrompt: {prompt}",
+                    f"GPT was reconifgured. Current settings:\n\t\tver.: {client.gpt_client.ver}\n\t\tPrompt: {client.gpt_client.prompt}",
                 )
             )
         elif command == "sysprompt":
