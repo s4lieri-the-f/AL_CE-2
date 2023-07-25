@@ -6,9 +6,6 @@ import tiktoken
 import requests
 from langdetect import detect
 
-# дитя дьявола
-import asyncio
-
 
 class GPT:
     def __init__(self, api_token: str, api_ver: str, deepl_token: str, log) -> None:
@@ -61,6 +58,7 @@ class GPT:
         return total_tokens
 
     def translate(self, request) -> str:
+        self.log("info", "Translating...")
         url = "https://api-free.deepl.com/v2/translate"
 
         # API parameters
@@ -77,12 +75,7 @@ class GPT:
             translated_text = result["translations"][0]["text"]
             return translated_text
         except requests.exceptions.RequestException as e:
-            asyncio.create_task(
-                self.log(
-                    "error",
-                    f"DeepL error. Dunno.",
-                )
-            )
+            print("Error:", e)
             return None
 
     def gen(self, type, request) -> str:
@@ -130,6 +123,7 @@ class GPT:
         n = self.maxtokens - self.tokenize(self.chat)
         while True:
             try:
+                self.log("info", f"USING {n} TOKENS FOR RESPONSE.")
                 headers = {
                     "Content-Type": "application/json",
                     "Authorization": f"Bearer {self.token}",  # Replace with your actual API key
@@ -151,12 +145,7 @@ class GPT:
                 result = response.json()
                 break
             except Exception as e:
-                asyncio.create_task(
-                    self.log(
-                        "error",
-                        f"GPT cought an error: {e}. Breaking.",
-                    )
-                )
+                self.log("warn", f"AL!CE CAUGHT AN ERROR: {e}. CLEARING HISTORY...")
                 self.chat.pop(1)
                 n = self.maxtokens - self.tokenize(self.chat)
 
@@ -165,93 +154,37 @@ class GPT:
 
         if detect(ai_answer) == "en":
             ai_answer = f"[AL!CE]:{self.translate(ai_answer)}"  # Автоперевод на русский
-        asyncio.create_task(
-            self.log(
-                "info", f"tokens left: {self.maxtokens - self.tokenize(self.chat)}"
-            )
-        )
+        self.log("info", f"tokens left: {self.maxtokens - self.tokenize(self.chat)}")
         return ai_answer
 
     def reconfigure(self, **kwargs) -> None:  # даже блядь не пытайся
         if len(kwargs) == 0:
             self.chat = [{"role": "system", "content": open(self.prompt).read()}]
-            asyncio.create_task(self.log("info", f"GPT instance reloaded."))
+            self.log("AL!CE reloaded", time.time())
             return None
-        try:
-            ver, prompt = kwargs.values()
+
+        ver = kwargs["ver"] if "ver" in kwargs.keys() else "3"
+        prompt = kwargs["prompt"] if "prompt" in kwargs.keys() else ""
+        if len(prompt) > 1:
             self.defprompt = prompt
             try:
                 self.prompt = os.path.join(self.prompts_dir, f"{self.defprompt}.txt")
-                self.chat = [
-                    {
-                        "role": "system",
-                        "content": open(self.prompt, "r", encoding="utf-8").read(),
-                    }
-                ]
-                if ver == "3":
-                    self.maxtokens = 4080
-                    self.ver = "3"
-                elif ver == "4":
-                    self.maxtokens = 8180
-                    self.ver = "4"
-                else:
-                    asyncio.create_task(
-                        self.log(
-                            "warn",
-                            f"GPT model {ver} does not exist. Doing nothing.",
-                        )
-                    )
-                    return None
+                self.chat = [{"role": "system", "content": open(self.prompt).read()}]
             except:
-                asyncio.create_task(
-                    self.log(
-                        "warn",
-                        f"There is no such prompt {prompt}. Doing nothing. Exact path to the prompt:\n\t\t{self.prompt}",
-                    )
-                )
+                self.log("warn", f"Exception! Prompt {prompt} does not exist!")
                 return None
-        except:
-            if "ver" not in kwargs.keys():
-                prompt = kwargs.values()
-                self.ver = "3"
-                self.defprompt = prompt
-                try:
-                    self.prompt = os.path.join(
-                        self.prompts_dir, f"{self.defprompt}.txt"
-                    )
-                    self.chat = [
-                        {"role": "system", "content": open(self.prompt).read()}
-                    ]
-                except:
-                    asyncio.create_task(
-                        self.log(
-                            "warn",
-                            f"There is no such prompt {prompt}. Doing nothing.",
-                        )
-                    )
-                    return None
-            else:
-                ver = kwargs.values()
-                prompt = self.prompt
-                if ver == "3":
-                    self.maxtokens = 4080
-                    self.ver = "3"
-                elif ver == "4":
-                    self.maxtokens = 8180
-                    self.ver = "4"
-                else:
-                    asyncio.create_task(
-                        self.log(
-                            "warn",
-                            f"GPT model {ver} does not exist. Doing nothing.",
-                        )
-                    )
-                    return None
-        asyncio.create_task(
-            self.log(
-                "info", f"Successfully switched to prompt {prompt} and gpt-ver {ver}!"
-            )
-        )
+
+        if ver == "3":
+            self.maxtokens = 4080
+            self.ver = "3"
+        elif ver == "4":
+            self.maxtokens = 8180
+            self.ver = "4"
+        else:
+            self.log("warn", f"Exception! Model {ver} does not exist!")
+            return None
+
+        self.log("info", f"Successfully switched to prompt {prompt} and gpt-ver {ver}!")
         return None
 
     def add_prompt(self, name: str, prompt: str) -> None:  # Добавляет промпт в файл
@@ -262,3 +195,6 @@ class GPT:
                 "question, there will be user's name."
             )
             os.chmod(os.path.join(self.prompts_dir, f"{name}.txt"), 0o644)
+
+
+
