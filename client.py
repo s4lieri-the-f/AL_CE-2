@@ -98,10 +98,18 @@ class Client:
                 "v": self.vk_ver,
                 "access_token": self.token,
             }
-            messages[chat] = loads(requests.post(link, data=data).content)["response"][
-                "items"
-            ]
 
+            messages[chat] = loads(requests.post(link, data=data).content)
+            if "response" not in messages[chat].keys():
+                asyncio.create_task(
+                    log(
+                        "error",
+                        f"Something went wrong while fetching conversations. Exactly:\n\t\t{messages[chat]}",
+                    )
+                )
+                return
+            else:
+                messages[chat] = messages[chat]["response"]["items"]
         return messages
 
     def send_message(self, message: str, where: int, image=None, reply=None) -> None:

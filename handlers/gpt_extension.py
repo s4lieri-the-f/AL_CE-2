@@ -25,7 +25,7 @@ async def handle(msg: dict, client: Client) -> None:
 
     if any(prefix + com in text for com in COMMANDS):
         command = text.split()[0][1:]
-        request = text[len(command) :]
+        request = text.split()[1:]
         asyncio.create_task(
             log(
                 "info",
@@ -33,7 +33,7 @@ async def handle(msg: dict, client: Client) -> None:
             )
         )
         if command == "answer":
-            response = client.gpt_client.message(user_id, name, request)
+            response = client.gpt_client.message(user_id, name, " ".join(request))
             asyncio.create_task(log("info", f'Generated response: "{response}"'))
             client.send_message(response, peer_id, None, reply_id)
             return
@@ -45,24 +45,23 @@ async def handle(msg: dict, client: Client) -> None:
             client.send_message(response, peer_id, None, reply_id)
             return
         elif command == "reboot":
-            request = text[len(command) :]
             if len(request) < 3:
                 client.gpt_client.reconfigure()
-            if " 4 " in request:
+            if " 4 " in " ".join(request):
                 ver = "4"
             else:
                 ver = "3"
-            prompt = request.split()[0]
+            prompt = request[1]
             client.gpt_client.reconfigure(ver=ver, prompt=prompt)
             asyncio.create_task(
                 log(
                     "info",
-                    f"GPT was reconifgured. Current settings:\n\t\tver.: {ver}\n\t\Prompt: {prompt}",
+                    f"GPT was reconifgured. Current settings:\n\t\tver.: {ver}\n\t\tPrompt: {prompt}",
                 )
             )
         elif command == "sysprompt":
-            name = request.split()[0]
-            prompt = request[len(name) :]
+            name = request[0]
+            prompt = " ".join(request[1:])
             client.gpt_client.addprompt(name, prompt)
         elif command == "help":
             client.send_message(client.gpt_client.help(), peer_id, reply=reply_id)

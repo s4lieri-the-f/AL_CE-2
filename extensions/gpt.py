@@ -130,7 +130,6 @@ class GPT:
         n = self.maxtokens - self.tokenize(self.chat)
         while True:
             try:
-                self.log("info", f"USING {n} TOKENS FOR RESPONSE.")
                 headers = {
                     "Content-Type": "application/json",
                     "Authorization": f"Bearer {self.token}",  # Replace with your actual API key

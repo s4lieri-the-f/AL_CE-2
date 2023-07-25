@@ -104,7 +104,17 @@ async def update_incoming_messages(client: Client) -> None:
     processed = {key: [] for key in client.conversations}
 
     while True:
-        msgs = client.refresh(client.conversations)
+        try:
+            msgs = client.refresh(client.conversations)
+        except Exception as e:
+            asyncio.create_task(
+                log(
+                    "error",
+                    f"Couldn't fetch messages from VK API. Exactly:\n\t\t{e}\n\n\t\tTrying again, skipping the loop.",
+                )
+            )
+            continue
+
         for conf in msgs.keys():
             for msg in msgs[conf]:
                 if (
