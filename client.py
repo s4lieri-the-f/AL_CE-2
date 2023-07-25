@@ -107,7 +107,7 @@ class Client:
                         f"Something went wrong while fetching conversations. Exactly:\n\t\t{messages[chat]}",
                     )
                 )
-                return
+                raise "FetchError"
             else:
                 messages[chat] = messages[chat]["response"]["items"]
         return messages

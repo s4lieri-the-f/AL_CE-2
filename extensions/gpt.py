@@ -195,6 +195,3 @@ class GPT:
                 "question, there will be user's name."
             )
             os.chmod(os.path.join(self.prompts_dir, f"{name}.txt"), 0o644)
-
-
-
