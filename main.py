@@ -13,6 +13,7 @@ handlers = []
 commands = {}
 
 
+# Will add activators() later
 async def update_handlers(once=False) -> set:
     global handlers
     global commands
