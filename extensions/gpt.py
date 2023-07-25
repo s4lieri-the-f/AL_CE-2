@@ -182,7 +182,12 @@ class GPT:
             self.defprompt = prompt
             try:
                 self.prompt = os.path.join(self.prompts_dir, f"{self.defprompt}.txt")
-                self.chat = [{"role": "system", "content": open(self.prompt).read()}]
+                self.chat = [
+                    {
+                        "role": "system",
+                        "content": open(self.prompt, "r", encoding="utf-8").read(),
+                    }
+                ]
                 if ver == "3":
                     self.maxtokens = 4080
                     self.ver = "3"
