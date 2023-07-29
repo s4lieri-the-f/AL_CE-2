@@ -74,18 +74,31 @@ class Client:
         return token["access_token"]
 
     def get_user(self, from_id: int) -> str:
-        name = loads(
-            requests.post(
-                f"https://api.vk.com/method/users.get",
-                {
-                    "v": self.vk_ver,
-                    "access_token": self.token,
-                    "user_ids": [from_id],
-                    "name_case": "nom",
-                },
-            ).content
-        )["response"][0]
-        return name["first_name"] + " " + name["last_name"]
+        try:
+            name = loads(
+                requests.post(
+                    f"https://api.vk.com/method/users.get",
+                    {
+                        "v": self.vk_ver,
+                        "access_token": self.token,
+                        "user_ids": [from_id],
+                        "name_case": "nom",
+                    },
+                ).content
+            )["response"][0]
+            return name["first_name"] + " " + name["last_name"]
+        except:
+            name = loads(
+                requests.post(
+                    f"https://api.vk.com/method/groups.getById",
+                    {
+                        "v": self.vk_ver,
+                        "access_token": self.token,
+                        "group_id": [from_id],
+                    },
+                ).content
+            )["response"][0]
+            return name["name"]
 
     def refresh(self, chats: list) -> list:
         link = "https://api.vk.com/method/messages.getHistory"
@@ -107,7 +120,7 @@ class Client:
                         f"Something went wrong while fetching conversations. Exactly:\n\t\t{messages[chat]}",
                     )
                 )
-                raise "FetchError"
+                raise FileNotFoundError
             else:
                 messages[chat] = messages[chat]["response"]["items"]
         return messages
