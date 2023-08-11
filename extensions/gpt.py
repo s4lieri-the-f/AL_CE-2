@@ -164,15 +164,15 @@ class GPT:
             return None
 
         ver = kwargs["ver"] if "ver" in kwargs.keys() else "3"
-        prompt = kwargs["prompt"] if "prompt" in kwargs.keys() else ""
-        if len(prompt) > 1:
-            self.defprompt = prompt
-            try:
-                self.prompt = os.path.join(self.prompts_dir, f"{self.defprompt}.txt")
-                self.chat = [{"role": "system", "content": open(self.prompt).read()}]
-            except:
-                self.log("warn", f"Exception! Prompt {prompt} does not exist!")
-                return None
+        prompt = kwargs["prompt"] if "prompt" in kwargs.keys() else self.prompt
+
+        self.defprompt = prompt
+        try:
+            self.prompt = os.path.join(self.prompts_dir, f"{self.defprompt}.txt")
+            self.chat = [{"role": "system", "content": open(self.prompt).read()}]
+        except:
+            self.log("warn", f"Exception! Prompt {prompt} does not exist!")
+            return None
 
         if ver == "3":
             self.maxtokens = 4080
