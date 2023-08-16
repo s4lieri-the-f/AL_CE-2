@@ -158,7 +158,8 @@ async def update_incoming_messages(client: Client) -> None:
 
         for peer_id in client.conversations:
             if len(processed[peer_id]) > 10:
-                processed[peer_id] = processed[peer_id][10:]
+                processed[peer_id] = sorted(sorted(processed[peer_id])[-10:])
+        print(processed)
         await asyncio.sleep(1)
 
 
