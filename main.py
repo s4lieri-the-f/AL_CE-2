@@ -4,8 +4,6 @@ import importlib
 from inspect import iscoroutinefunction as isasync
 import platform
 
-from rich import print
-
 # ДИТЯ ДЬЯВОЛА
 import asyncio
 
@@ -141,7 +139,6 @@ async def update_incoming_messages(client: Client) -> None:
                                 f"Handling \"{command}\" command with args [{', '.join(args)}] from {msg['peer_id']} id conf.\n\t\tUsing {commands[command]}.handle()",
                             )
                         )
-                        print(msg)
                         try:
                             asyncio.create_task(
                                 globals()[commands[command]].handle(msg, client)
@@ -153,7 +150,6 @@ async def update_incoming_messages(client: Client) -> None:
                                     f"Handling \"{command}\" command with args [{', '.join(args)}] from {msg['peer_id']} id conf failed. Details:\n\t\t{e.args}",
                                 )
                             )
-                    print(command, args, sep=" ")
                     processed[msg["peer_id"]].append(msg["id"])
 
         for peer_id in client.conversations:
