@@ -94,7 +94,7 @@ class Client:
                     {
                         "v": self.vk_ver,
                         "access_token": self.token,
-                        "group_id": [from_id],
+                        "group_id": [abs(from_id)],
                     },
                 ).content
             )["response"][0]
