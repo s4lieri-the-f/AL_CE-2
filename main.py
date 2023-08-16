@@ -13,6 +13,7 @@ handlers = []
 commands = {}
 
 
+# Will add activators() later
 async def update_handlers(once=False) -> set:
     global handlers
     global commands
@@ -104,7 +105,17 @@ async def update_incoming_messages(client: Client) -> None:
     processed = {key: [] for key in client.conversations}
 
     while True:
-        msgs = client.refresh(client.conversations)
+        try:
+            msgs = client.refresh(client.conversations)
+        except Exception as e:
+            asyncio.create_task(
+                log(
+                    "error",
+                    f"Couldn't fetch messages from VK API. Exactly:\n\t\t{e}\n\n\t\tTrying again, skipping the loop.",
+                )
+            )
+            continue
+
         for conf in msgs.keys():
             for msg in msgs[conf]:
                 if (
@@ -123,17 +134,17 @@ async def update_incoming_messages(client: Client) -> None:
                             )
                         )
                     else:
+                        msg["name"] = client.get_user(msg["from_id"])
                         asyncio.create_task(
                             log(
                                 "info",
                                 f"Handling \"{command}\" command with args [{', '.join(args)}] from {msg['peer_id']} id conf.\n\t\tUsing {commands[command]}.handle()",
                             )
                         )
+                        print(msg)
                         try:
                             asyncio.create_task(
-                                globals()[commands[command]].handle(
-                                    msg["from_id"], command, client, args
-                                )
+                                globals()[commands[command]].handle(msg, client)
                             )
                         except Exception as e:
                             asyncio.create_task(
@@ -147,7 +158,8 @@ async def update_incoming_messages(client: Client) -> None:
 
         for peer_id in client.conversations:
             if len(processed[peer_id]) > 10:
-                processed[peer_id] = processed[peer_id][10:]
+                processed[peer_id] = sorted(sorted(processed[peer_id])[-10:])
+        print(processed)
         await asyncio.sleep(1)
 
 

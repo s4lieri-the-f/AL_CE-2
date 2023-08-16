@@ -23,7 +23,6 @@ class GPT:
             os.path.join(
                 os.path.dirname(os.path.realpath(__file__)),
                 "..",
-                "..",
                 "assets",
                 "extensions",
                 "prompts",
@@ -34,16 +33,18 @@ class GPT:
 
         self.chat = [{"role": "system", "content": open(self.prompt).read()}]
         self.users = {}
+        self.admins = ["166592935", "211385933"]
 
         return None
 
     def help(self) -> None:
-        a = f"""Привет! Я Алиса, ваш ИИ-помощник. Чтобы меня вызвать, просто тагните и напишите ваш запрос -- я отвечу! 
+        a = f"""Привет! Я Алиса, ваш ИИ-помощник. Чтобы меня вызвать, введите префикс - сейчас это ~ - и одну из команд ниже.
                     Я сохраняю контекст до четырех тысяч токенов -- это примерно 8 тысяч символов. Контекст тратит и запрос, и ответ, так что аккуратнее! 
-                    Вот команды, которые вы можете использовать, чтобы изменить контекст или начало. Все команды пишутся после тега без особых символов: 
-                    flush <n> - удаляет первые n сообщений из контекста. 
-                    sysprompt <prompt_name (1 слово!)> <prompt> -- позволяет вгноять и использовать пользовательские промпты по ключу.
-                    reboot <name> - полностью удаляет контекст, оставляя системный промпт (если оставить имя пустым) или меняя его. Список доступных имен: \n"""
+                    Четвертая модель сохраняет до 8 тысяч, но она очень дорогая, аккуратно! 
+                    Вот команды, которые вы можете использовать:
+                    answer <запрос> - вызывает меня для ответа.
+                    sysprompt <prompt_name (1 слово!)> <prompt> -- позволяет вгноять и использовать пользовательские промпты по ключу. Пока что команда доступна только администраторам.
+                    reboot <ver> <name> - полностью удаляет контекст, оставляя системный промпт (если оставить имя пустым) или меняя его, а также может сменить версию модели.. Список доступных имен: \n"""
         for key in os.listdir(self.prompts_dir):
             a += "\t • " + key[:-4] + "\n"
 
@@ -58,7 +59,7 @@ class GPT:
 
     def translate(self, request) -> str:
         self.log("info", "Translating...")
-        url = "https://api.deepl.com/v2/translate"
+        url = "https://api-free.deepl.com/v2/translate"
 
         # API parameters
         params = {
@@ -156,64 +157,53 @@ class GPT:
         self.log("info", f"tokens left: {self.maxtokens - self.tokenize(self.chat)}")
         return ai_answer
 
+    def add_admin(self, user) -> None:
+        if user not in self.admins:
+            self.admins.append(user)
+        return None
+
     def reconfigure(self, **kwargs) -> None:  # даже блядь не пытайся
         if len(kwargs) == 0:
             self.chat = [{"role": "system", "content": open(self.prompt).read()}]
             self.log("AL!CE reloaded", time.time())
             return None
+
+        ver = kwargs["ver"] if "ver" in kwargs.keys() else "3"
+        prompt = kwargs["prompt"] if "prompt" in kwargs.keys() else self.prompt
+        user = kwargs["user"] if "user" in kwargs.keys() else "admin"
+        self.defprompt = prompt
+
         try:
-            ver, prompt = kwargs.values()
-            self.defprompt = prompt
-            try:
-                self.prompt = os.path.join(self.prompts_dir, f"{self.defprompt}.txt")
-                self.chat = [{"role": "system", "content": open(self.prompt).read()}]
-                if ver == "3":
-                    self.maxtokens = 4080
-                    self.ver = "3"
-                elif ver == "4":
-                    self.maxtokens = 8180
-                    self.ver = "4"
-                else:
-                    self.log("warn", f"Exception! Model {ver} does not exist!")
-                    return None
-            except:
-                self.log("warn", f"Exception! Prompt {prompt} does not exist!")
-                return None
+            self.prompt = os.path.join(self.prompts_dir, f"{self.defprompt}.txt")
+            self.chat = [{"role": "system", "content": open(self.prompt).read()}]
         except:
-            if "ver" not in kwargs.keys():
-                prompt = kwargs.values()
+            self.log("warn", f"Exception! Prompt {prompt} does not exist!")
+            return None
+        if user in self.admins:  #Принимает на вход юзера в том числе, версии могут ребутать только админы
+            if ver == "3":
+                self.maxtokens = 4080
                 self.ver = "3"
-                self.defprompt = prompt
-                try:
-                    self.prompt = os.path.join(
-                        self.prompts_dir, f"{self.defprompt}.txt"
-                    )
-                    self.chat = [
-                        {"role": "system", "content": open(self.prompt).read()}
-                    ]
-                except:
-                    self.log("warn", f"Exception! Prompt {prompt} does not exist!")
-                    return None
+            elif ver == "4":
+                self.maxtokens = 8180
+                self.ver = "4"
             else:
-                ver = kwargs.values()
-                prompt = self.prompt
-                if ver == "3":
-                    self.maxtokens = 4080
-                    self.ver = "3"
-                elif ver == "4":
-                    self.maxtokens = 8180
-                    self.ver = "4"
-                else:
-                    self.log("info", f"Exception! Model {ver} does not exist!")
-                    return None
+                self.log("warn", f"Exception! Model {ver} does not exist!")
+                return None
+        else:
+            self.ver = "3"
+
         self.log("info", f"Successfully switched to prompt {prompt} and gpt-ver {ver}!")
         return None
 
-    def add_prompt(self, name: str, prompt: str) -> None:  # Добавляет промпт в файл
-        with open(os.path.join(self.prompts_dir, f"{name}.txt"), "w") as file:
-            file.write(
-                prompt
-                + "\n You are talking in conference, answering each user in unique way. Before every "
-                "question, there will be user's name."
-            )
-            os.chmod(os.path.join(self.prompts_dir, f"{name}.txt"), 0o644)
+    def add_prompt(self, name: str, prompt: str, user: str) -> None:  # Добавляет промпт в файл
+        if user in self.admins: #отоже могут только админы
+            with open(os.path.join(self.prompts_dir, f"{name}.txt"), "w") as file:
+                file.write(
+                    prompt
+                    + "\n You are talking in conference, answering each user in unique way. Before every "
+                    "question, there will be user's name."
+                )
+                os.chmod(os.path.join(self.prompts_dir, f"{name}.txt"), 0o644)
+
+
+
