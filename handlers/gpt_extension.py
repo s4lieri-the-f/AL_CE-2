@@ -52,18 +52,20 @@ async def handle(msg: dict, client: Client) -> None:
             else:
                 ver = "3"
             prompt = request[1] if len(request) >= 2 else request[0]
-            client.gpt_client.reconfigure(ver=ver, prompt=prompt, user = user_id) #принимает юзера
+            client.gpt_client.reconfigure(
+                ver=ver, prompt=prompt, user=user_id
+            )  # принимает юзера
             asyncio.create_task(
                 log(
                     "info",
                     f"GPT was reconifgured. Current settings:\n\t\tver.: {client.gpt_client.ver}\n\t\tPrompt: {client.gpt_client.prompt}",
                 )
             )
-        elif command == "addadmin":  #Новая команда, добавляет админа
+
+        # ИСПРАВИТЬ, ОНА КРИВАЯ
+        elif command == "addadmin":  # Новая команда, добавляет админа
             if user_id in client.gpt_client.admins:
-                request = request.replace("@", "")
-                request = request.replace("*", "")
-                id = client.get_user_number_id(request)
+                id = int(request.replace("[", "").replace("]", "").split("|")[0][2:])
                 client.gpt_client.add_admin(id)
 
         elif command == "sysprompt":
