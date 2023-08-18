@@ -24,7 +24,6 @@ class Client:
 
         # loading extension variables for CAME
         self.ext = dict(config["EXTENSIONS"])
-        print(self.ext)
 
         # opening a new .log file, writing into it first line, then use for it log() method
         if "logs" not in os.listdir():
@@ -100,7 +99,9 @@ class Client:
             )["response"][0]
             return name["name"]
 
-    def get_user_number_id(self, tag: str) -> str: #Получает цифровой айди юзера из тега
+    def get_user_number_id(
+        self, tag: str
+    ) -> str:  # Получает цифровой айди юзера из тега
         response = loads(
             requests.post(
                 f"https://api.vk.com/method/users.get",

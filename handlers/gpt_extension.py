@@ -1,5 +1,6 @@
 from client import Client, log
 from extensions.gpt import *
+from json import loads
 
 # ДИТЯ ДЬЯВОЛА
 import asyncio
@@ -11,7 +12,13 @@ COMMANDS = ["gen", "answer", "reboot", "help", "sysprompt", "addadmin"]
 # Function, using Client() to return requested result.
 async def handle(msg: dict, client: Client) -> None:
     client.gpt_client = (
-        GPT(client.ext["openai_key"], "3", client.ext["deepl_api"], log)
+        GPT(
+            client.ext["openai_key"],
+            "3",
+            client.ext["deepl_api"],
+            loads(client.ext["admins"]),
+            log,
+        )
         if "gpt_client" not in client.__dir__()
         else client.gpt_client
     )
@@ -52,18 +59,20 @@ async def handle(msg: dict, client: Client) -> None:
             else:
                 ver = "3"
             prompt = request[1] if len(request) >= 2 else request[0]
-            client.gpt_client.reconfigure(ver=ver, prompt=prompt, user = user_id) #принимает юзера
+            client.gpt_client.reconfigure(
+                ver=ver, prompt=prompt, user=user_id
+            )  # принимает юзера
             asyncio.create_task(
                 log(
                     "info",
                     f"GPT was reconifgured. Current settings:\n\t\tver.: {client.gpt_client.ver}\n\t\tPrompt: {client.gpt_client.prompt}",
                 )
             )
-        elif command == "addadmin":  #Новая команда, добавляет админа
+        elif command == "addadmin":  # Новая команда, добавляет админа
             if user_id in client.gpt_client.admins:
-                request = request.replace("@", "")
-                request = request.replace("*", "")
-                id = client.get_user_number_id(request)
+                print(request[0])
+                id = request[0].split("|")[0][3:]
+                print(id)
                 client.gpt_client.add_admin(id)
 
         elif command == "sysprompt":

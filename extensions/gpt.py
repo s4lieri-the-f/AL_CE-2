@@ -6,12 +6,18 @@ import tiktoken
 import requests
 from langdetect import detect
 
+import asyncio
+
 
 class GPT:
-    def __init__(self, api_token: str, api_ver: str, deepl_token: str, log) -> None:
+    def __init__(
+        self, api_token: str, api_ver: str, deepl_token: str, admins: list, log
+    ) -> None:
         self.token = api_token
         self.ver = api_ver
         self.log = log
+        # потом срезать
+        print(self.log)
         self.deepl_token = deepl_token
 
         self.enc = tiktoken.get_encoding("gpt2")
@@ -33,7 +39,7 @@ class GPT:
 
         self.chat = [{"role": "system", "content": open(self.prompt).read()}]
         self.users = {}
-        self.admins = ["166592935", "211385933"]
+        self.admins = admins
 
         return None
 
@@ -58,7 +64,7 @@ class GPT:
         return total_tokens
 
     def translate(self, request) -> str:
-        self.log("info", "Translating...")
+        asyncio.create_task(self.log("info", "Translating..."))
         url = "https://api-free.deepl.com/v2/translate"
 
         # API parameters
@@ -123,7 +129,7 @@ class GPT:
         n = self.maxtokens - self.tokenize(self.chat)
         while True:
             try:
-                self.log("info", f"USING {n} TOKENS FOR RESPONSE.")
+                asyncio.create_task(self.log("info", f"USING {n} TOKENS FOR RESPONSE."))
                 headers = {
                     "Content-Type": "application/json",
                     "Authorization": f"Bearer {self.token}",  # Replace with your actual API key
@@ -145,7 +151,9 @@ class GPT:
                 result = response.json()
                 break
             except Exception as e:
-                self.log("warn", f"AL!CE CAUGHT AN ERROR: {e}. CLEARING HISTORY...")
+                asyncio.create_task(
+                    self.log("warn", f"AL!CE CAUGHT AN ERROR: {e}. CLEARING HISTORY...")
+                )
                 self.chat.pop(1)
                 n = self.maxtokens - self.tokenize(self.chat)
 
@@ -154,12 +162,18 @@ class GPT:
 
         if detect(ai_answer) == "en":
             ai_answer = f"[AL!CE]:{self.translate(ai_answer)}"  # Автоперевод на русский
-        self.log("info", f"tokens left: {self.maxtokens - self.tokenize(self.chat)}")
+        asyncio.create_task(
+            self.log(
+                "info", f"tokens left: {self.maxtokens - self.tokenize(self.chat)}"
+            )
+        )
         return ai_answer
 
     def add_admin(self, user) -> None:
         if user not in self.admins:
             self.admins.append(user)
+
+        asyncio.create_task(self.log("info", f'Admins are: {", ".join(self.admins)}'))
         return None
 
     def reconfigure(self, **kwargs) -> None:  # даже блядь не пытайся
@@ -177,7 +191,9 @@ class GPT:
             self.prompt = os.path.join(self.prompts_dir, f"{self.defprompt}.txt")
             self.chat = [{"role": "system", "content": open(self.prompt).read()}]
         except:
-            self.log("warn", f"Exception! Prompt {prompt} does not exist!")
+            asyncio.create_task(
+                self.log("warn", f"Exception! Prompt {prompt} does not exist!")
+            )
             return None
         if (
             user in self.admins
@@ -194,13 +210,20 @@ class GPT:
         else:
             self.ver = "3"
 
-        self.log("info", f"Successfully switched to prompt {prompt} and gpt-ver {ver}!")
+        asyncio.create_task(
+            self.log(
+                "info", f"Successfully switched to prompt {prompt} and gpt-ver {ver}!"
+            )
+        )
         return None
 
     def add_prompt(
         self, name: str, prompt: str, user: str
     ) -> None:  # Добавляет промпт в файл
         if user in self.admins:  # отоже могут только админы
+            asyncio.create_task(
+                self.log("info", f"Adding {name} prompt. Requested by admin: {user}")
+            )
             with open(os.path.join(self.prompts_dir, f"{name}.txt"), "w") as file:
                 file.write(
                     prompt

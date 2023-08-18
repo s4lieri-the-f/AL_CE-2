@@ -136,7 +136,7 @@ async def update_incoming_messages(client: Client) -> None:
                         asyncio.create_task(
                             log(
                                 "info",
-                                f"Handling \"{command}\" command with args [{', '.join(args)}] from {msg['peer_id']} id conf.\n\t\tUsing {commands[command]}.handle()",
+                                f"Handling \"{command}\" command with args [{', '.join(args)}] from {msg['peer_id']} id conf (Requested by {msg['from_id']}).\n\t\tUsing {commands[command]}.handle()",
                             )
                         )
                         try:
