@@ -100,6 +100,21 @@ class Client:
             )["response"][0]
             return name["name"]
 
+    def get_user_number_id(self, tag: str) -> str: #Получает цифровой айди юзера из тега
+        response = loads(
+            requests.post(
+                f"https://api.vk.com/method/users.get",
+                {
+                    "v": self.vk_ver,
+                    "access_token": self.token,
+                    "user_ids": [tag],
+                    "name_case": "nom",
+                },
+            ).content
+        )
+        if "response" in response:
+            return response["response"][0]["id"]
+
     def refresh(self, chats: list) -> list:
         link = "https://api.vk.com/method/messages.getHistory"
 

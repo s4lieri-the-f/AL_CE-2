@@ -5,7 +5,7 @@ from extensions.gpt import *
 import asyncio
 
 # Mandatory variables list
-COMMANDS = ["gen", "answer", "reboot", "help", "sysprompt"]
+COMMANDS = ["gen", "answer", "reboot", "help", "sysprompt", "addadmin"]
 
 
 # Function, using Client() to return requested result.
@@ -52,17 +52,24 @@ async def handle(msg: dict, client: Client) -> None:
             else:
                 ver = "3"
             prompt = request[1] if len(request) >= 2 else request[0]
-            client.gpt_client.reconfigure(ver=ver, prompt=prompt)
+            client.gpt_client.reconfigure(ver=ver, prompt=prompt, user = user_id) #принимает юзера
             asyncio.create_task(
                 log(
                     "info",
                     f"GPT was reconifgured. Current settings:\n\t\tver.: {client.gpt_client.ver}\n\t\tPrompt: {client.gpt_client.prompt}",
                 )
             )
+        elif command == "addadmin":  #Новая команда, добавляет админа
+            if user_id in client.gpt_client.admins:
+                request = request.replace("@", "")
+                request = request.replace("*", "")
+                id = client.get_user_number_id(request)
+                client.gpt_client.add_admin(id)
+
         elif command == "sysprompt":
             name = request[0]
             prompt = " ".join(request[1:])
-            client.gpt_client.add_prompt(name, prompt)
+            client.gpt_client.add_prompt(name, prompt, user=user_id)
         elif command == "help":
             client.send_message(client.gpt_client.help(), peer_id, reply=reply_id)
 
