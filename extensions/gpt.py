@@ -173,7 +173,9 @@ class GPT:
         if user not in self.admins:
             self.admins.append(user)
 
-        asyncio.create_task(self.log("info", f'Admins are: {", ".join(self.admins)}'))
+        asyncio.create_task(
+            self.log("info", f'Admins are: {", ".join(str(x) for x in self.admins)}')
+        )
         return None
 
     def reconfigure(self, **kwargs) -> None:  # даже блядь не пытайся

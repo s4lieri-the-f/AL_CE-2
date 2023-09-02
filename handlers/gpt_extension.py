@@ -70,9 +70,7 @@ async def handle(msg: dict, client: Client) -> None:
             )
         elif command == "addadmin":  # Новая команда, добавляет админа
             if user_id in client.gpt_client.admins:
-                print(request[0])
                 id = request[0].split("|")[0][3:]
-                print(id)
                 client.gpt_client.add_admin(id)
 
         elif command == "sysprompt":
