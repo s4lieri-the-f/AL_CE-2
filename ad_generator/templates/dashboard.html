@@ -38,6 +38,10 @@
                 </ul>
             </div>
             <button id="editPostsBtn">Редактировать посты</button>
+            <form id="uploadForm" enctype="multipart/form-data" method="post" action="/upload_image">
+                <input type="file" name="image" accept="image/*" required>
+                <button type="submit">Добавить изображение</button>
+            </form>
         </div>
         <div id="ad-groups-container">
             <div id="ad-groups" class="scrollable">
