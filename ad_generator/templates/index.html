@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <title>AL_CE-2 Advertisement Bot</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        h1 {
+            margin-bottom: 20px;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        input, button {
+            margin-bottom: 10px;
+            padding: 10px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Панель управления рекламой AL_CE-2</h1>
+    <form method="POST" action="/">
+        <input type="text" name="access_code" placeholder="Код доступа" required>
+        <button type="submit">Войти</button>
+    </form>
+    {% if error %}
+            <p style="color: red;">{{ error }}</p>
+    {% endif %}
+</body>
+</html>

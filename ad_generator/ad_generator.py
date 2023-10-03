@@ -1,3 +1,4 @@
+import os
 import sqlite3
 from rich import print
 
@@ -29,12 +30,45 @@ class Ad():
         print(groups)
         return  groups
 
+    def get_user_group_link(self, user_id):
+        # Предполагается, что у вас есть таблица UserGroups с полями id и link
+        query = "SELECT link FROM UserGroups WHERE id = ?"
+        result = self._execute_query(query, (user_id,))
+        return result[0][0] if result else None
+
+    def get_user_group_id(self, user_id):
+        query = "SELECT group_id FROM Users WHERE id = ?"
+        result = self._execute_query(query, (user_id,))
+        return result[0][0] if result else None
+
+    def get_ad_posts(self, group_id):
+        query = "SELECT content FROM UserGroupPosts WHERE user_group_id = ?"
+        results = self._execute_query(query, (group_id,))
+        return [result[0] for result in results]
+
+    def get_ad_groups(self, group_id):
+        query = "SELECT ad_group_id FROM UserGroupAdGroup WHERE user_group_id = ?"
+        results = self._execute_query(query, (group_id,))
+        return [result[0] for result in results]
+
     def get_user_group_and_posts(self, group_id):
         query = "SELECT * FROM UserGroupPosts WHERE user_group_id = ?"
         posts = self._execute_query(query, (group_id,))
         print(f"[bold]Posts for User Group {group_id}:[/bold]")
         print(posts)
         return posts
+    
+    def get_post_by_id(self, post_id):
+        query = "SELECT content FROM UserGroupPosts WHERE id = ?"
+        post = self._execute_query(query, (post_id,))
+        return post
+
+    def get_user_group_and_hashtags(self, group_id):
+        query = "SELECT hashtags FROM UserGroups WHERE id = ?"
+        hashtags = self._execute_query(query, (group_id,))
+        print(f"[bold]Hashtags for User Group {group_id}:[/bold]")
+        print(hashtags)
+        return hashtags
 
     def get_user_group_and_ad_groups(self, group_id):
         query = """
@@ -61,19 +95,52 @@ class Ad():
         print(ad_group)
         return  ad_group
 
-    def add_post_image(self, post_id, image_path):
+    def associate_ad_group_db(self, ad_group_id, user_group_id):
+        query = "INSERT INTO UserGroupAdGroup (user_group_id, ad_group_id) VALUES (?, ?)"
+        self._execute_query(query, (user_group_id, ad_group_id), commit=True)
+        print(f"[bold]Added assosiacion for  User Group {user_group_id} and ad group: {ad_group_id}[/bold]")
+        return True
+
+    def delete_association_db(self, ad_group_id, user_group_id):
+        query = "DELETE FROM UserGroupAdGroup WHERE user_group_id = ? AND ad_group_id = ?"
+        self._execute_query(query, (user_group_id, ad_group_id), commit=True)
+        print(f"[bold]Deleted assosiacion for  User Group {user_group_id} and ad group: {ad_group_id}[/bold]")
+        return True
+
+    def add_post_image(self, group_id, image_path):
         # Чтение изображения в виде бинарных данных
         with open(image_path, 'rb') as file:
             image_data = file.read()
 
-        query = "INSERT INTO PostImages (post_id, image) VALUES (?, ?)"
-        self._execute_query(query, (post_id, image_data), commit=True)
-        print(f"[bold]Added image for Post ID: {post_id}[/bold]")
+        query = "INSERT INTO PostImages (group_id, image) VALUES (?, ?, ?)"
+        self._execute_query(query, (group_id, image_data), commit=True)
+        print(f"[bold]Added image for Group ID: {group_id}[/bold]")
+
+    def delete_all_syncs_for_post(self, post_id):
+        query = "DELETE FROM ImagesSync WHERE post_id = ?"
+        self._execute_query(query, (post_id,), commit=True)
+    def add_post_image_sync(self, post_id, image_id):
+        query = "SELECT * FROM ImagesSync WHERE post_id = ? AND image_id = ?"
+        result = self._execute_query(query, (post_id, image_id))
+        if len(result)<=0:
+            query = "INSERT INTO ImagesSync (post_id, image_id) VALUES (?, ?)"
+            self._execute_query(query, (post_id, image_id), commit=True)
+        return True
 
     def get_post_images(self, post_id):
-        query = "SELECT image FROM PostImages WHERE post_id = ?"
+        query = """
+            SELECT PostImages.id, PostImages.image
+            FROM PostImages 
+            JOIN ImagesSync ON PostImages.id = ImagesSync.image_id 
+            WHERE ImagesSync.post_id = ?
+            """
         images = self._execute_query(query, (post_id,))
-        return [image[0] for image in images]
+        return [image for image in images]
+
+    def get_group_images(self, group_id):
+        query = "SELECT id, image FROM PostImages WHERE group_id = ?"
+        images = self._execute_query(query, (group_id,))
+        return [image for image in images]
 
     def save_image_to_file(self, image_data, file_path):
         with open(file_path, 'wb') as file:
@@ -83,6 +150,19 @@ class Ad():
         query = "UPDATE UserGroups SET link = ? WHERE id = ?"
         self._execute_query(query, (new_link, group_id), commit=True)
         print(f"[bold]Updated User Group {group_id} with new link: {new_link}[/bold]")
+
+    def update_post(self, post_id, post_content):
+        query = "UPDATE UserGroupPosts SET content = ? WHERE id = ?"
+        self._execute_query(query, (post_content, post_id), commit=True)
+
+
+    def validate_key(self, user_key):
+        query = "SELECT id FROM Users WHERE access_code = ?"
+        result = self._execute_query(query, (user_key,))
+        if result:
+            return result[0][0]  # Return the user ID
+        else:
+            return None
 
     def add_user_group(self, link):
         query = "INSERT INTO UserGroups (link) VALUES (?)"
@@ -150,3 +230,8 @@ class Ad():
 
         # Возвращаем ссылку, период публикации, собранный пост и данные о картинке
         return ad_group[1], ad_group[4], assembled_post, image_bytes
+
+if __name__=="__main__":
+    ad = Ad("user_ad_groups.db3")
+
+

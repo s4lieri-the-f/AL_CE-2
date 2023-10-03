@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+    <title>User Dashboard</title>
+</head>
+<body>
+
+    <div id="user-group-link">
+        <a href="{{ user_group_link }}" target="_blank">{{ user_group_link }}</a>
+    </div>
+    <div id="user-group-hashtags">
+        <a><strong>Хэштеги:</strong> {{ user_group_hashtags }}</a>
+    </div>
+    <div id="content">
+        <div id="ad-posts-container">
+            <div id="ad-posts" class="scrollable">
+                <h2>Посты:</h2>
+                <ul>
+                    {% for post, images in ad_posts %}
+                        <li>
+                            <pre style="font-family: Arial, sans-serif;">{{ post[2] }}</pre>
+
+                            <!-- Карусель изображений -->
+                            <div class="carousel">
+                                {% for image in images %}
+                                    <img src="{{ image[1] }}" class="carousel-image {% if loop.first %}active{% endif %}">
+                                {% endfor %}
+
+                                <!-- Кнопки навигации -->
+                                <button class="prev" onclick="changeImage(-1, this)">❮</button>
+                                <button class="next" onclick="changeImage(1, this)">❯</button>
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <button id="editPostsBtn">Редактировать посты</button>
+        </div>
+        <div id="ad-groups-container">
+            <div id="ad-groups" class="scrollable">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Ссылка</th>
+                            <th>Базовые хештеги</th>
+                            <th>Разрешена ссылка?</th>
+                            <th>Период публикации</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for group in ad_groups %}
+                            <tr>
+                                <td>{{ group[0] }}</td>
+                                <td><a href="{{ group[1] }}" target="_blank">{{ group[1] }}</a></td>
+                                <td>{{ group[2] }}</td>
+                                <td>{{ "Да" if group[3] else "Нет" }}</td>
+                                <td>{{ group[4] }} <button title="Удалить эту ассоциацию" class="delete-btn" data-group-id="{{ group[0] }}">✖</button></td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <button id="showAllAdGroupsBtn">Все рекламные группы</button>
+        </div>
+    </div>
+
+<div id="allAdGroupsOverlay" class="overlay">
+    <div class="overlay-content">
+        <span id="closeBtn" class="close-btn">&times;</span>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Ссылка</th>
+                        <th>Базовые хештеги</th>
+                        <th>Разрешена ссылка?</th>
+                        <th>Период публикации</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for group in available_ad_groups %}
+                        <tr>
+                            <td>{{ group[0] }}</td>
+                            <td><a href="{{ group[1] }}" target="_blank">{{ group[1] }}</a></td>
+                            <td>{{ group[2] }}</td>
+                            <td>{{ "Да" if group[3] else "Нет" }}</td>
+                            <td>{{ group[4] }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <form id="associateAdGroupForm">
+                <label for="adGroupId">ID рекламной группы:</label>
+                <input type="number" id="adGroupId" name="adGroupId" required>
+                <button type="submit">Ассоциировать с текущей группой</button>
+            </form>
+    </div>
+</div>
+
+<div id="selectPostOverlay" class="overlay">
+    <div class="overlay-content">
+        <span id="closeSelectPostBtn" class="close-btn">&times;</span>
+        <h2>Выберите пост для редактирования</h2>
+        <div>
+            {% for post in ad_posts %}
+                <div class="post-block" onclick="openEditOverlay({{ post[0][1] }})">
+                    {{ post[0][1] }}: {{ post[0][2][:50] }}...
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Оверлей редактирования поста -->
+<div id="editPostOverlay" class="overlay">
+    <div class="overlay-content">
+        <span id="closeEditPostBtn" class="close-btn">&times;</span>
+        <h2>Редактировать пост</h2>
+        <form id="imageSelectionForm" class="image-form" action="/submit_edit">
+            <textarea id="postContent" name="postContent" rows="4" cols="50"></textarea>
+            <h3>Выберите изображения</h3>
+            <div class="images-scrollable">
+                {% for image in group_images %}
+                    <label class="checkbox-container image-label">
+                        <input type="checkbox" name="image" value="{{ image[0] }}" {% if image[0] in associated_image_ids %}checked{% endif %}>
+                        <span class="checkmark"></span>
+                        <img src="{{ image[1] }}" class="image-preview">
+                    </label>
+                {% endfor %}
+            </div>
+            <input type="hidden" id="postId" name="postId" value="">
+            <button type="button" onclick="submitEdit()">Сохранить</button>
+        </form>
+    </div>
+</div>
+
+<script>
+document.getElementById('showAllAdGroupsBtn').addEventListener('click', function() {
+    document.getElementById('allAdGroupsOverlay').style.display = 'block';
+});
+
+document.getElementById('closeBtn').addEventListener('click', function() {
+    document.getElementById('allAdGroupsOverlay').style.display = 'none';
+});
+</script>
+
+<script>
+document.getElementById('editPostsBtn').addEventListener('click', function() {
+    document.getElementById('selectPostOverlay').style.display = 'block';
+});
+
+document.getElementById('closeSelectPostBtn').addEventListener('click', function() {
+    document.getElementById('selectPostOverlay').style.display = 'none';
+});
+
+document.getElementById('closeEditPostBtn').addEventListener('click', function() {
+    document.getElementById('editPostOverlay').style.display = 'none';
+});
+</script>
+
+<script>
+document.getElementById('associateAdGroupForm').addEventListener('submit', function(e) {
+    e.preventDefault(); // Предотвращаем стандартное поведение формы (перезагрузку страницы)
+
+    var adGroupId = document.getElementById('adGroupId').value;
+
+    // Отправляем данные на сервер с использованием AJAX
+    fetch('/associate_ad_group', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            adGroupId: adGroupId,
+            userId: '{{ session["user_id"] }}'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+
+        if(data.success) {
+            alert('Успешно ассоциировано!');
+            window.location.href = '/dashboard';
+        } else {
+            alert('Ошибка! Что-то пошло не так на стороне сервера');
+            window.location.href = '/dashboard';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while trying to associate Ad Group!');
+    });
+});
+</script>
+
+<script>
+    document.querySelectorAll('.delete-btn').forEach(button => {
+    button.addEventListener('click', function(e) {
+        e.preventDefault();
+
+        var groupId = this.getAttribute('data-group-id');
+
+        // Отправляем запрос на сервер для удаления ассоциации
+        fetch('/delete_association', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                groupId: groupId,
+                userId: '{{ session["user_id"] }}'
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if(data.success) {
+                alert('Association deleted successfully!');
+                window.location.href = '/dashboard';
+
+            } else {
+                alert('Failed to delete association!');
+                window.location.href = '/dashboard';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while trying to delete association!');
+        });
+    });
+});
+
+</script>
+
+<script>
+    function changeImage(direction, btn) {
+    const carousel = btn.parentElement;
+    const images = carousel.querySelectorAll('.carousel-image');
+    let activeIndex = 0;
+
+    images.forEach((img, index) => {
+        if (img.classList.contains('active')) {
+            activeIndex = index;
+        }
+    });
+
+    images[activeIndex].classList.remove('active');
+    activeIndex = (activeIndex + direction + images.length) % images.length;
+    images[activeIndex].classList.add('active');
+}
+</script>
+
+
+<script>
+function openSelectPostOverlay() {
+    document.getElementById('selectPostOverlay').style.display = 'block';
+}
+
+function openEditOverlay(postId) {
+    document.getElementById('selectPostOverlay').style.display = 'none';
+
+
+    fetch('/get_post_by_id', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            postId: postId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('postContent').value = data.postContent;
+        document.getElementById('postId').value = postId;  // Устанавливаем значение postId в скрытое поле формы
+        document.getElementById('editPostOverlay').style.display = 'block';
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while trying to fetch post data!');
+    });
+}
+
+function submitEdit() {
+    // Собираем данные формы
+    const formData = new FormData(document.getElementById('imageSelectionForm'));
+
+    // Отправляем данные на сервер с использованием AJAX
+    fetch('/submit_edit', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if(data.success) {
+            alert('Пост успешно обновлен!');
+            window.location.href = '/dashboard';
+        } else {
+            alert('Failed to update post!');
+            window.location.href = '/dashboard';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while trying to update post!');
+    });
+}
+</script>
