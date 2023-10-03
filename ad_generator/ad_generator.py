@@ -23,6 +23,8 @@ class Ad():
             else:
                 return cursor.fetchall()
 
+    #ГЕТТЕРЫ
+
     def get_all_user_groups(self):
         query = "SELECT * FROM UserGroups"
         groups = self._execute_query(query)
@@ -95,38 +97,6 @@ class Ad():
         print(ad_group)
         return  ad_group
 
-    def associate_ad_group_db(self, ad_group_id, user_group_id):
-        query = "INSERT INTO UserGroupAdGroup (user_group_id, ad_group_id) VALUES (?, ?)"
-        self._execute_query(query, (user_group_id, ad_group_id), commit=True)
-        print(f"[bold]Added assosiacion for  User Group {user_group_id} and ad group: {ad_group_id}[/bold]")
-        return True
-
-    def delete_association_db(self, ad_group_id, user_group_id):
-        query = "DELETE FROM UserGroupAdGroup WHERE user_group_id = ? AND ad_group_id = ?"
-        self._execute_query(query, (user_group_id, ad_group_id), commit=True)
-        print(f"[bold]Deleted assosiacion for  User Group {user_group_id} and ad group: {ad_group_id}[/bold]")
-        return True
-
-    def add_post_image(self, group_id, image_path):
-        # Чтение изображения в виде бинарных данных
-        with open(image_path, 'rb') as file:
-            image_data = file.read()
-
-        query = "INSERT INTO PostImages (group_id, image) VALUES (?, ?, ?)"
-        self._execute_query(query, (group_id, image_data), commit=True)
-        print(f"[bold]Added image for Group ID: {group_id}[/bold]")
-
-    def delete_all_syncs_for_post(self, post_id):
-        query = "DELETE FROM ImagesSync WHERE post_id = ?"
-        self._execute_query(query, (post_id,), commit=True)
-    def add_post_image_sync(self, post_id, image_id):
-        query = "SELECT * FROM ImagesSync WHERE post_id = ? AND image_id = ?"
-        result = self._execute_query(query, (post_id, image_id))
-        if len(result)<=0:
-            query = "INSERT INTO ImagesSync (post_id, image_id) VALUES (?, ?)"
-            self._execute_query(query, (post_id, image_id), commit=True)
-        return True
-
     def get_post_images(self, post_id):
         query = """
             SELECT PostImages.id, PostImages.image
@@ -141,6 +111,50 @@ class Ad():
         query = "SELECT id, image FROM PostImages WHERE group_id = ?"
         images = self._execute_query(query, (group_id,))
         return [image for image in images]
+
+
+    #СЕТТЕРЫ
+
+
+    def associate_ad_group_db(self, ad_group_id, user_group_id):
+        query = "INSERT INTO UserGroupAdGroup (user_group_id, ad_group_id) VALUES (?, ?)"
+        self._execute_query(query, (user_group_id, ad_group_id), commit=True)
+        print(f"[bold]Added assosiacion for  User Group {user_group_id} and ad group: {ad_group_id}[/bold]")
+        return True
+
+    def delete_association_db(self, ad_group_id, user_group_id):
+        query = "DELETE FROM UserGroupAdGroup WHERE user_group_id = ? AND ad_group_id = ?"
+        self._execute_query(query, (user_group_id, ad_group_id), commit=True)
+        print(f"[bold]Deleted assosiacion for  User Group {user_group_id} and ad group: {ad_group_id}[/bold]")
+        return True
+
+    def add_post_image(self, group_id, image_path): #ДЛЯ РУЧНОГО ДОБАВЛЕНИЯ.
+        # Чтение изображения в виде бинарных данных
+        with open(image_path, 'rb') as file:
+            image_data = file.read()
+
+        query = "INSERT INTO PostImages (group_id, image) VALUES (?, ?)"
+        self._execute_query(query, (group_id, image_data), commit=True)
+        print(f"[bold]Added image for Group ID: {group_id}[/bold]")
+
+    def add_post_image_from_bytes(self, group_id, image_data):
+        query = "INSERT INTO PostImages (group_id, image) VALUES (?, ?)"
+        self._execute_query(query, (group_id, image_data), commit=True)
+        print(f"[bold]Added image for Group ID: {group_id}[/bold]")
+
+
+
+    def delete_all_syncs_for_post(self, post_id):
+        query = "DELETE FROM ImagesSync WHERE post_id = ?"
+        self._execute_query(query, (post_id,), commit=True)
+
+    def add_post_image_sync(self, post_id, image_id):
+        query = "SELECT * FROM ImagesSync WHERE post_id = ? AND image_id = ?"
+        result = self._execute_query(query, (post_id, image_id))
+        if len(result)<=0:
+            query = "INSERT INTO ImagesSync (post_id, image_id) VALUES (?, ?)"
+            self._execute_query(query, (post_id, image_id), commit=True)
+        return True
 
     def save_image_to_file(self, image_data, file_path):
         with open(file_path, 'wb') as file:
@@ -197,6 +211,7 @@ class Ad():
             conn.commit()
 
         print(f"[bold]Added relations for User Group ID: {user_group_id} with Ad Group IDs: {ad_group_ids}[/bold]")
+
 
     def assemble(self, user_group_id, ad_group_id, post_id):
         ad_group = self.get_ad_group(ad_group_id)[0]

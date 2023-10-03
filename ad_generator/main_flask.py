@@ -59,6 +59,33 @@ def dashboard():
                            group_images=all_group_images,
                            associated_image_ids=associated_image_ids)
 
+
+@app.route('/upload_image', methods=['POST'])
+def upload_image():
+    if 'image' not in request.files:
+        # Ошибка: файл не предоставлен
+        return redirect(request.url)
+
+    file = request.files['image']
+
+    if file.filename == '':
+        # Ошибка: файл не выбран
+        return redirect(request.url)
+
+    if file and file.filename.endswith(('.png', '.jpg', '.jpeg')):
+        # Преобразование изображения в двоичные данные
+        image_data = file.read()
+
+        # Сохранение изображения в базе данных
+        ad.add_post_image_from_bytes(ad.get_user_group_id(session.get('user_id')), image_data)
+
+        # Перенаправление пользователя на страницу с формой
+        return redirect(url_for('dashboard'))
+
+    else:
+        # Ошибка: недопустимый формат файла
+        return redirect(request.url)
+
 @app.route('/associate_ad_group', methods=['POST'])
 def associate_ad_group():
     data = request.get_json()  # Получаем JSON данные из запроса
