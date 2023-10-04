@@ -12,7 +12,7 @@ commands = {}
 
 
 # Will add activators() later
-async def update_handlers(once=False) -> set:
+async def update_handlers(once=False) -> list:
     global handlers
     global commands
 
@@ -41,7 +41,7 @@ async def update_handlers(once=False) -> set:
 
             for lib in to_load:
                 try:
-                    globals()[lib] = importlib.import_module("handlers." + lib)
+                    globals()[lib] = await importlib.import_module("handlers." + lib)
 
                 except Exception as e:
                     asyncio.create_task(
@@ -114,7 +114,7 @@ async def update_incoming_messages(client: Client) -> None:
             )
             continue
 
-        for conf in msgs.keys():
+        for conf in msgs:
             for msg in msgs[conf]:
                 if (
                     "text" in msg.keys()
@@ -169,7 +169,7 @@ async def main():
         )
     )
 
-    globals()["handlers"] = await asyncio.create_task(update_handlers(once=True))
+    globals()["handlers"] = asyncio.create_task(update_handlers(once=True))
 
     s_handlers = "\n\t\t".join(globals()["handlers"])
     asyncio.create_task(
@@ -179,7 +179,6 @@ async def main():
         )
     )
 
-    loop = asyncio.get_event_loop
     await asyncio.gather(update_handlers(), update_incoming_messages(client))
 
 

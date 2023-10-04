@@ -16,8 +16,6 @@ class GPT:
         self.token = api_token
         self.ver = api_ver
         self.log = log
-        # потом срезать
-        print(self.log)
         self.deepl_token = deepl_token
 
         self.enc = tiktoken.get_encoding("gpt2")
