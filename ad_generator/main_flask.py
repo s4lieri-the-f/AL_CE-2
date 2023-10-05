@@ -15,7 +15,7 @@ def index():
     error = None
     if request.method == 'POST':
         user_key = request.form['access_code']
-        user_id = ad.validate_key(user_key)  # Assume ad is an instance of your Ad class
+        user_id = ad.validate_key(user_key)
         if user_id == None:
             error = 'Неправильный код доступа!'
         elif user_id == -1:
@@ -34,12 +34,20 @@ def dashboard():
     user_group_link = ad.get_user_group_link(ad.get_user_group_id(user_id))
 
     ad_posts = []
-    for post in ad.get_user_group_and_posts(ad.get_user_group_id(user_id)):
-        post_id = post[0]  # или каким бы ни был ваш идентификатор поста
-        images = ad.get_post_images(post_id)
-        encoded_images = [(image[0], "data:image/jpeg;base64," + base64.b64encode(image[1]).decode('utf-8')) for image in images]
-        associated_image_ids = [image[0] for image in images]
-        ad_posts.append((post, encoded_images))
+    data = ad.get_user_group_and_posts(ad.get_user_group_id(user_id))
+    if len(data)>0:
+        for post in data:
+            post_id = post[0]
+            images = ad.get_post_images(post_id)
+            encoded_images = [(image[0], "data:image/jpeg;base64," + base64.b64encode(image[1]).decode('utf-8')) for image in images]
+            associated_image_ids = [image[0] for image in images]
+
+            ad_posts.append((post, encoded_images))
+    else:
+        encoded_images = [(None, None)]
+        associated_image_ids = [None]
+        ad_posts.append((None, encoded_images))
+
 
     all_group_images = [(image[0], "data:image/jpeg;base64," + base64.b64encode(image[1]).decode('utf-8'))
                         for image in ad.get_group_images(ad.get_user_group_id(user_id))]
@@ -63,27 +71,25 @@ def dashboard():
 @app.route('/upload_image', methods=['POST'])
 def upload_image():
     if 'image' not in request.files:
-        # Ошибка: файл не предоставлен
+
         return redirect(request.url)
 
     file = request.files['image']
 
     if file.filename == '':
-        # Ошибка: файл не выбран
+
         return redirect(request.url)
 
     if file and file.filename.endswith(('.png', '.jpg', '.jpeg')):
-        # Преобразование изображения в двоичные данные
+
         image_data = file.read()
 
-        # Сохранение изображения в базе данных
+
         ad.add_post_image_from_bytes(ad.get_user_group_id(session.get('user_id')), image_data)
 
-        # Перенаправление пользователя на страницу с формой
         return redirect(url_for('dashboard'))
 
     else:
-        # Ошибка: недопустимый формат файла
         return redirect(request.url)
 
 @app.route('/associate_ad_group', methods=['POST'])
@@ -92,10 +98,23 @@ def associate_ad_group():
     ad_group_id = data.get('adGroupId')
     user_group_id = ad.get_user_group_id(data.get('userId'))
 
-    # Выполняем вашу функцию для ассоциации Ad Group здесь
     success = ad.associate_ad_group_db(ad_group_id, user_group_id)
 
-    # Отправляем ответ обратно на клиент
+    return jsonify(success=success)
+
+@app.route('/add_ad_group', methods=['POST'])
+def add_ad_group():
+    data = request.get_json()  # Получаем JSON данные из запроса
+    ad_group_link = data.get('adGroupLink')
+    adGroupHashtags = data.get('adGroupHashtags')
+    adGroupPostfix = data.get('adGroupPostfix')
+    isAllowed = data.get('linkAllowed')
+    adGroupPeriod = data.get('adGroupPeriod')
+    user_group_id = ad.get_user_group_id(data.get('userId'))
+    row_type = data.get("direction")
+
+    success = ad.add_ad_group(ad_group_link,adGroupHashtags,adGroupPostfix,isAllowed,adGroupPeriod, row_type)
+
     return jsonify(success=success)
 
 
@@ -105,8 +124,28 @@ def delete_association():
     group_id = data.get('groupId')
     user_group_id = ad.get_user_group_id(data.get('userId'))
 
-    # Выполните вашу функцию для удаления ассоциации здесь
     success = ad.delete_association_db(group_id, user_group_id)
+
+    return jsonify(success=success)
+
+@app.route('/delete_image', methods=['POST'])
+def delete_image():
+    data = request.get_json()
+    image_id = data.get('imageId')
+    user_group_id = ad.get_user_group_id(data.get('userId'))
+
+
+    success = ad.delete_image_db(image_id, user_group_id)
+
+
+    return jsonify(success=success)
+
+@app.route('/delete_post', methods=['POST'])
+def delete_post():
+    data = request.get_json()
+    post_id = data.get('postId')
+    ad.delete_all_syncs_for_post(post_id)
+    success = ad.delete_post(post_id)
 
     # Отправляем ответ обратно на клиент
     return jsonify(success=success)
@@ -114,15 +153,23 @@ def delete_association():
 
 @app.route('/get_post_by_id', methods=['POST'])
 def get_post_by_id():
-    data = request.get_json()  # Получаем JSON данные из запроса
+    data = request.get_json()
     post_id = data.get('postId')
 
-    # Получаем данные поста из вашей функции
+
     post_content = ad.get_post_by_id(post_id)
 
-    # Отправляем данные поста обратно на клиент
+
     return jsonify(postContent=post_content)
 
+@app.route('/save_hashtags', methods=['POST'])
+def save_hashtags():
+    data = request.get_json()
+    hashtags = data.get('hashtags')
+
+    ad.update_user_group_hashtags(ad.get_user_group_id(session.get("user_id")),hashtags)
+
+    return jsonify(success=True)
 
 @app.route('/submit_edit', methods=['POST'])
 def submit_edit():
@@ -132,8 +179,21 @@ def submit_edit():
 
     ad.delete_all_syncs_for_post(post_id)
     for i in selected_images:
-        success = ad.add_post_image_sync(post_id, i)
+        ad.add_post_image_sync(post_id, i)
     ad.update_post(post_id, post_content)
+    success = True
+    return jsonify(success=success)
+
+@app.route('/submit_new', methods=['POST'])
+def submit_new():
+    print("Начинаю добавление!")
+    selected_images = request.form.getlist('image')
+    post_content = request.form.get('postContent')
+    user_group = ad.get_user_group_id(session.get('user_id'))
+    post_id = ad.add_post(user_group, post_content)
+    print(post_id, user_group, selected_images, post_content)
+    for i in selected_images:
+        success = ad.add_post_image_sync(post_id, i)
 
     return jsonify(success=success)
 

@@ -20,6 +20,7 @@ class Ad():
             cursor.execute(query, params)
             if commit:
                 conn.commit()
+                return cursor
             else:
                 return cursor.fetchall()
 
@@ -112,6 +113,14 @@ class Ad():
         images = self._execute_query(query, (group_id,))
         return [image for image in images]
 
+    def validate_key(self, user_key):
+        query = "SELECT id FROM Users WHERE access_code = ?"
+        result = self._execute_query(query, (user_key,))
+        if result:
+            return result[0][0]  # Return the user ID
+        else:
+            return None
+
 
     #СЕТТЕРЫ
 
@@ -126,6 +135,11 @@ class Ad():
         query = "DELETE FROM UserGroupAdGroup WHERE user_group_id = ? AND ad_group_id = ?"
         self._execute_query(query, (user_group_id, ad_group_id), commit=True)
         print(f"[bold]Deleted assosiacion for  User Group {user_group_id} and ad group: {ad_group_id}[/bold]")
+        return True
+
+    def delete_image_db(self, image_id, user_group_id):
+        query = "DELETE FROM PostImages WHERE group_id = ? AND id = ?"
+        self._execute_query(query, (user_group_id, image_id), commit=True)
         return True
 
     def add_post_image(self, group_id, image_path): #ДЛЯ РУЧНОГО ДОБАВЛЕНИЯ.
@@ -143,10 +157,14 @@ class Ad():
         print(f"[bold]Added image for Group ID: {group_id}[/bold]")
 
 
-
     def delete_all_syncs_for_post(self, post_id):
         query = "DELETE FROM ImagesSync WHERE post_id = ?"
         self._execute_query(query, (post_id,), commit=True)
+
+    def delete_post(self, post_id):
+        query = "DELETE FROM UserGroupPosts WHERE id = ?"
+        self._execute_query(query, (post_id,), commit=True)
+        return True
 
     def add_post_image_sync(self, post_id, image_id):
         query = "SELECT * FROM ImagesSync WHERE post_id = ? AND image_id = ?"
@@ -165,39 +183,37 @@ class Ad():
         self._execute_query(query, (new_link, group_id), commit=True)
         print(f"[bold]Updated User Group {group_id} with new link: {new_link}[/bold]")
 
+    def update_user_group_hashtags(self, group_id, hashtags):
+        query = "UPDATE UserGroups SET hashtags = ? WHERE id = ?"
+        self._execute_query(query, (hashtags, group_id), commit=True)
+        print(f"[bold]Updated User Group {group_id} with new link: {hashtags}[/bold]")
+
     def update_post(self, post_id, post_content):
         query = "UPDATE UserGroupPosts SET content = ? WHERE id = ?"
         self._execute_query(query, (post_content, post_id), commit=True)
-
-
-    def validate_key(self, user_key):
-        query = "SELECT id FROM Users WHERE access_code = ?"
-        result = self._execute_query(query, (user_key,))
-        if result:
-            return result[0][0]  # Return the user ID
-        else:
-            return None
 
     def add_user_group(self, link):
         query = "INSERT INTO UserGroups (link) VALUES (?)"
         self._execute_query(query, (link,), commit=True)
         print(f"[bold]Added User Group with link: {link}[/bold]")
 
-    def add_ad_group(self, link, allowed_hashtags, is_link_allowed, period, row_type):
+    def add_ad_group(self, link, allowed_hashtags, postfix, is_link_allowed, period, row_type):
         query = """
-            INSERT INTO AdGroups (link, allowed_hashtags, is_link_allowed, period, row_type) 
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO AdGroups (link, allowed_hashtags, is_link_allowed, period, row_type, postfix) 
+            VALUES (?, ?, ?, ?, ?, ?)
         """
-        self._execute_query(query, (link, allowed_hashtags, is_link_allowed, period, row_type), commit=True)
+        self._execute_query(query, (link, allowed_hashtags, is_link_allowed, period, row_type, postfix), commit=True)
         print(f"[bold]Added Ad Group with link: {link}[/bold]")
+        return True
 
-    def add_post(self, user_group_id, post_text):
+    def add_post(self, user_group_id, content):
         query = """
-            INSERT INTO UserGroupPosts (user_group_id, post_text) 
+            INSERT INTO UserGroupPosts (user_group_id, content) 
             VALUES (?, ?)
         """
-        self._execute_query(query, (user_group_id, post_text), commit=True)
+        cursor = self._execute_query(query, (user_group_id, content), commit=True)
         print(f"[bold]Added Post for User Group ID: {user_group_id}[/bold]")
+        return cursor.lastrowid
 
     def add_usergroup_adgroup_relations(self, user_group_id, ad_group_ids):
         # Подготовка данных для вставки
@@ -212,41 +228,50 @@ class Ad():
 
         print(f"[bold]Added relations for User Group ID: {user_group_id} with Ad Group IDs: {ad_group_ids}[/bold]")
 
-
     def assemble(self, user_group_id, ad_group_id, post_id):
+        # Получаем данные о рекламной группе
         ad_group = self.get_ad_group(ad_group_id)[0]
-        # Получаем данные о посте
-        post_query = "SELECT * FROM UserGroupPosts WHERE id = ? AND user_group_id = ?"
-        post = self._execute_query(post_query, (post_id, user_group_id))[0]
+
+        post = self.get_post_by_id(post_id)
 
         # Проверяем, есть ли пост для данной группы пользователя
         if not post:
             raise ValueError("No post found for the provided user group ID and post ID.")
-        #получаем картинку для поста
+
+        # Получаем картинку для поста
         image_bytes = self.get_post_images(post_id)
+
+        # Получаем хештеги из группы пользователя
+        user_group_query = "SELECT hashtags FROM UserGroups WHERE id = ?"
+        user_group_hashtags = self._execute_query(user_group_query, (user_group_id,))[0][0]
+
         # Собираем пост
         assembled_post = ""
-        posttext = post[2]  # Текст поста
+        posttext = post[0][0]  # Текст поста
         link = ad_group[1]  # Ссылка из рекламной группы
-        hashtags = ad_group[2]  # Хештеги из рекламной группы
+        ad_group_hashtags = ad_group[2]  # Хештеги из рекламной группы
         is_link_allowed = ad_group[3]  # Разрешена ли ссылка
         row_type = ad_group[5]  # Тип строки: 'up' или 'down'
 
+        # Объединяем хештеги из группы пользователя и рекламной группы
+        all_hashtags = user_group_hashtags + " " + ad_group_hashtags
+
         # Добавляем хештеги и ссылку в соответствии с требованиями
         if row_type == "up":
-            assembled_post += "Теги: \n" + hashtags + "\n" + posttext
+            assembled_post += "Теги: \n" + all_hashtags + "\n" + posttext
             if is_link_allowed:
                 assembled_post += "\n \n" + "Ссылка на игру: " + link
         else:
             assembled_post += posttext
             if is_link_allowed:
                 assembled_post += "\n \n" + "Ссылка на игру: " + link
-            assembled_post += "\n \n" + "Теги: \n" + hashtags
+            assembled_post += "\n \n" + "Теги: \n" + all_hashtags
 
         # Возвращаем ссылку, период публикации, собранный пост и данные о картинке
         return ad_group[1], ad_group[4], assembled_post, image_bytes
 
 if __name__=="__main__":
     ad = Ad("user_ad_groups.db3")
+
 
 

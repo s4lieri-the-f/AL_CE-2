@@ -12,7 +12,9 @@
         <a href="{{ user_group_link }}" target="_blank">{{ user_group_link }}</a>
     </div>
     <div id="user-group-hashtags">
-        <a><strong>Хэштеги:</strong> {{ user_group_hashtags }}</a>
+        <strong>Хэштеги:</strong>
+            <input type="text" id="hashtagsInput" value="{{ user_group_hashtags }}">
+        <button id="saveHashtagsBtn" onclick="saveHashtags()">✔️</button>
     </div>
     <div id="content">
         <div id="ad-posts-container">
@@ -20,20 +22,24 @@
                 <h2>Посты:</h2>
                 <ul>
                     {% for post, images in ad_posts %}
-                        <li>
-                            <pre style="font-family: Arial, sans-serif;">{{ post[2] }}</pre>
+                        {% if post %}
+                            <li>
+                                <pre style="font-family: Arial, sans-serif;">{{ post[2] }}</pre>
 
-                            <!-- Карусель изображений -->
-                            <div class="carousel">
-                                {% for image in images %}
-                                    <img src="{{ image[1] }}" class="carousel-image {% if loop.first %}active{% endif %}">
-                                {% endfor %}
+                                <!-- Карусель изображений -->
+                                <div class="carousel">
+                                    {% for image in images %}
+                                        <img src="{{ image[1] }}" class="carousel-image {% if loop.first %}active{% endif %}">
+                                    {% endfor %}
 
-                                <!-- Кнопки навигации -->
-                                <button class="prev" onclick="changeImage(-1, this)">❮</button>
-                                <button class="next" onclick="changeImage(1, this)">❯</button>
-                            </div>
-                        </li>
+                                    <!-- Кнопки навигации -->
+                                    <button class="prev" onclick="changeImage(-1, this)">❮</button>
+                                    <button class="next" onclick="changeImage(1, this)">❯</button>
+                                </div>
+                            </li>
+                        {% else %}
+                            <h2>У вас нет постов!</h2>
+                        {% endif %}
                     {% endfor %}
                 </ul>
             </div>
@@ -51,6 +57,7 @@
                             <th>ID</th>
                             <th>Ссылка</th>
                             <th>Базовые хештеги</th>
+                            <th>Постфикс</th>
                             <th>Разрешена ссылка?</th>
                             <th>Период публикации</th>
                         </tr>
@@ -61,6 +68,7 @@
                                 <td>{{ group[0] }}</td>
                                 <td><a href="{{ group[1] }}" target="_blank">{{ group[1] }}</a></td>
                                 <td>{{ group[2] }}</td>
+                                <td>{{ group[6] }}</td>
                                 <td>{{ "Да" if group[3] else "Нет" }}</td>
                                 <td>{{ group[4] }} <button title="Удалить эту ассоциацию" class="delete-btn" data-group-id="{{ group[0] }}">✖</button></td>
                             </tr>
@@ -81,6 +89,7 @@
                         <th>ID</th>
                         <th>Ссылка</th>
                         <th>Базовые хештеги</th>
+                        <th>Постфикс</th>
                         <th>Разрешена ссылка?</th>
                         <th>Период публикации</th>
                     </tr>
@@ -91,6 +100,7 @@
                             <td>{{ group[0] }}</td>
                             <td><a href="{{ group[1] }}" target="_blank">{{ group[1] }}</a></td>
                             <td>{{ group[2] }}</td>
+                            <td>{{ group[6] }}</td>
                             <td>{{ "Да" if group[3] else "Нет" }}</td>
                             <td>{{ group[4] }}</td>
                         </tr>
@@ -98,9 +108,25 @@
                 </tbody>
             </table>
             <form id="associateAdGroupForm">
-                <label for="adGroupId">ID рекламной группы:</label>
-                <input type="number" id="adGroupId" name="adGroupId" required>
+                <input type="number" id="adGroupId" placeholder="ID рекламной группы:" name="adGroupId" required>
                 <button type="submit">Ассоциировать с текущей группой</button>
+            </form>
+            <h4>Добавление новой группы:</h4>
+            <form id="addAdGroupForm">
+                <input type="text" id="adGroupLink" placeholder="Ссылка" name="adGroupLink" required>
+                <input type="text" id="adGroupHashtags" placeholder="Хэштеги" name="adGroupHashtags" required>
+                <input type="text" id="adGroupPostfix" placeholder="Постфикс" name="adGroupPostfix" required>
+                <label for="linkAllowed" class="checkbox-label" title="Разрешена ли ссылка">
+                    <input type="checkbox" name="linkAllowed" value="newGroup" id="linkAllowed">
+                    <span class="checkmark"></span>
+                </label>
+                <input type="number" id="adGroupPeriod" placeholder="Период" min="12" name="adGroupPeriod" required>
+                <select id="direction" name="direction" required>
+                    <option value="up">До</option>
+                    <option value="down">После</option>
+                </select>
+                    <span id="directionDescription">Если группа требует, чтобы хештеги были до\после текста поста, выберите соответствующий вариант. В ином случае - выбирайте удобный вам, мы рекомендуем после.</span>
+                <button type="submit">Добавить новую группу</button>
             </form>
     </div>
 </div>
@@ -109,13 +135,19 @@
     <div class="overlay-content">
         <span id="closeSelectPostBtn" class="close-btn">&times;</span>
         <h2>Выберите пост для редактирования</h2>
-        <div>
+        <div class="posts-container">
             {% for post in ad_posts %}
-                <div class="post-block" onclick="openEditOverlay({{ post[0][1] }})">
-                    {{ post[0][1] }}: {{ post[0][2][:50] }}...
-                </div>
+                {% if post and post[0] and post[0][2] %}
+                    <div class="post-block" onclick="openEditOverlay({{ post[0][0] }})">
+                        {{ post[0][0] }}: {{ post[0][2][:50] }}...
+                        <button title="Удалить пост из базы данных" class="delete-post-btn" data-post-id="{{ post[0][0] }}" onclick="deletePost(event, {{ post[0][0] }})">Удалить пост из БД</button>
+                    </div>
+                {% else %}
+                    <h2>У вас нет постов!</h2>
+                {% endif %}
             {% endfor %}
         </div>
+        <button onclick="openCreatePostOverlay()" class="create-post-btn">Добавить новый пост</button>
     </div>
 </div>
 
@@ -133,6 +165,7 @@
                         <input type="checkbox" name="image" value="{{ image[0] }}" {% if image[0] in associated_image_ids %}checked{% endif %}>
                         <span class="checkmark"></span>
                         <img src="{{ image[1] }}" class="image-preview">
+                        <button title="Удалить это изображение из базы данных" class="delete-image-btn" data-image-id="{{ image[0] }}">Удалить изображение из БД</button>
                     </label>
                 {% endfor %}
             </div>
@@ -141,6 +174,65 @@
         </form>
     </div>
 </div>
+
+    <!-- Оверлей создания поста -->
+<div id="createPostOverlay" class="overlay">
+    <div class="overlay-content">
+        <span id="closeCreatePostBtn" class="close-btn" onclick="closeCreatePostOverlay()">&times;</span>
+        <h2>Создать новый пост</h2>
+        <form id="createPostForm" class="image-form" action="/submit_new" method="POST">
+            <textarea id="newPostContent" name="postContent" rows="4" cols="50"></textarea>
+            <h3>Выберите изображения</h3>
+            <div class="images-scrollable">
+                {% for image in group_images %}
+                    <label class="checkbox-container image-label">
+                        <input type="checkbox" name="image" value="{{ image[0] }}">
+                        <span class="checkmark"></span>
+                        <img src="{{ image[1] }}" class="image-preview">
+                        <button title="Удалить это изображение из базы данных" class="delete-image-btn" data-image-id="{{ image[0] }}">Удалить изображение из БД</button>
+                    </label>
+                {% endfor %}
+            </div>
+            <button type="button" onclick="submitNewPost()">Создать пост</button>
+        </form>
+    </div>
+</div>
+
+<script>
+function openCreatePostOverlay() {
+    document.getElementById('createPostOverlay').style.display = 'block';
+}
+
+function closeCreatePostOverlay() {
+    document.getElementById('createPostOverlay').style.display = 'none';
+}
+
+function submitNewPost() {
+    // Собираем данные формы
+    console.log("submitNewPost function is called");
+    const formData = new FormData(document.getElementById('createPostForm'));
+
+    // Отправляем данные на сервер с использованием AJAX
+    fetch('/submit_new', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if(data.success) {
+            alert('Пост успешно добавлен!');
+            window.location.href = '/dashboard';
+        } else {
+            alert('Ошибка при добавлении поста!');
+            window.location.href = '/dashboard';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while trying to update post!');
+    });
+}
+</script>
 
 <script>
 document.getElementById('showAllAdGroupsBtn').addEventListener('click', function() {
@@ -163,6 +255,50 @@ document.getElementById('closeSelectPostBtn').addEventListener('click', function
 
 document.getElementById('closeEditPostBtn').addEventListener('click', function() {
     document.getElementById('editPostOverlay').style.display = 'none';
+});
+</script>
+
+<script>
+document.getElementById('addAdGroupForm').addEventListener('submit', function(e) {
+    e.preventDefault(); // Предотвращаем стандартное поведение формы (перезагрузку страницы)
+
+    var adGroupLink = document.getElementById('adGroupLink').value;
+    var adGroupHashtags = document.getElementById('adGroupHashtags').value;
+    var adGroupPostfix = document.getElementById('adGroupPostfix').value;
+    var linkAllowed = document.getElementById('linkAllowed').checked;
+    var adGroupPeriod = document.getElementById('adGroupPeriod').value;
+    var direction = document.getElementById('direction').value;
+
+    fetch('/add_ad_group', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            adGroupLink: adGroupLink,
+            adGroupHashtags: adGroupHashtags,
+            adGroupPostfix: adGroupPostfix,
+            linkAllowed: linkAllowed,
+            adGroupPeriod: adGroupPeriod,
+            direction: direction,
+            userId: '{{ session["user_id"] }}'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+
+        if(data.success) {
+            alert('Успешно добавлено!');
+            window.location.href = '/dashboard';
+        } else {
+            alert('Ошибка! Что-то пошло не так на стороне сервера');
+            window.location.href = '/dashboard';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while trying to associate Ad Group!');
+    });
 });
 </script>
 
@@ -222,11 +358,11 @@ document.getElementById('associateAdGroupForm').addEventListener('submit', funct
         .then(response => response.json())
         .then(data => {
             if(data.success) {
-                alert('Association deleted successfully!');
+                alert('Ассоциация успешно удалена!');
                 window.location.href = '/dashboard';
 
             } else {
-                alert('Failed to delete association!');
+                alert('Ошибка при удалении ассоциации!');
                 window.location.href = '/dashboard';
             }
         })
@@ -237,6 +373,75 @@ document.getElementById('associateAdGroupForm').addEventListener('submit', funct
     });
 });
 
+</script>
+
+<script>
+    document.querySelectorAll('.delete-image-btn').forEach(button => {
+    button.addEventListener('click', function(e) {
+        e.preventDefault();
+
+        var imageId = this.getAttribute('data-image-id');
+
+        // Отправляем запрос на сервер для удаления ассоциации
+        fetch('/delete_image', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                imageId: imageId,
+                userId: '{{ session["user_id"] }}'
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if(data.success) {
+                alert('Изображение успешно удалено!');
+                window.location.href = '/dashboard';
+
+            } else {
+                alert('Ошибка при удалении изображения!');
+                window.location.href = '/dashboard';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while trying to delete image!');
+        });
+    });
+});
+
+</script>
+
+<script>
+    function deletePost(event, postId) {
+    event.stopPropagation();
+    fetch('/delete_post', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                postId: postId,
+                userId: '{{ session["user_id"] }}'
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if(data.success) {
+                alert('Пост успешно удален!');
+                window.location.href = '/dashboard';
+
+            } else {
+                alert('Ошибка при удалении поста!');
+                window.location.href = '/dashboard';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Ошибка на сервере!');
+        });
+}
 </script>
 
 <script>
@@ -310,6 +515,34 @@ function submitEdit() {
     .catch(error => {
         console.error('Error:', error);
         alert('An error occurred while trying to update post!');
+    });
+}
+</script>
+
+<script>
+function saveHashtags() {
+    const hashtags = document.getElementById('hashtagsInput').value;
+
+    fetch('/save_hashtags', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            hashtags: hashtags
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if(data.success) {
+            alert('Хэштеги успешно сохранены!');
+        } else {
+            alert('Ошибка при сохранении хэштегов!');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Произошла ошибка при попытке сохранить хэштеги!');
     });
 }
 </script>
