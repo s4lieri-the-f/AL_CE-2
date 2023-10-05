@@ -182,6 +182,21 @@ body {
     background-color: #003366;
 }
 
+#createPostForm button {
+    background-color: #004080;
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    width: 100%;  /* Растягиваем кнопку на всю ширину родительского элемента */
+}
+
+#createPostForm button:hover {
+    background-color: #003366;
+}
+
 h2 {
     text-align: center;
     color: #1a1a1a;
@@ -191,7 +206,7 @@ table {
     width: 100%;
     border-collapse: collapse;
     margin: 1px 0;
-    font-size: 18px;
+    font-size: 14px;
     text-align: left;
 }
 
@@ -252,6 +267,13 @@ strong {
     scrollbar-color: #004080 #f8f8f8;
 }
 
+.posts-container {
+    max-height: calc(100% - 60px);  /* Adjusted height to make space for the button */
+    overflow-y: auto;
+    margin-bottom: 40px
+    /* Other styles... */
+}
+
 .overlay-content::-webkit-scrollbar {
     width: 12px;
 }
@@ -301,6 +323,101 @@ strong {
     background-color: #003366;
 }
 
+#addAdGroupForm {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    margin-top: 20px;
+    width: 80%;  /* Adjust width as per requirement */
+}
+
+#addAdGroupForm input,
+#addAdGroupForm button {
+    width: 100%;  /* Full width of the parent */
+    padding: 10px;
+    font-size: 16px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+}
+
+#addAdGroupForm input[type="checkbox"] {
+    width: auto;  /* Reset width for checkbox */
+}
+
+.checkbox-label {
+    position: relative;
+    cursor: pointer;
+    padding-left: 25px;
+    font-size: 16px;
+    user-select: none;
+    line-height: 20px;
+    width: 100%;  /* Full width of the parent */
+    display: flex;  /* Align checkbox and label text */
+    align-items: center;  /* Center vertically */
+    margin-bottom: 20px;  /* Added bottom margin */
+}
+
+.checkbox-label input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+}
+
+.checkmark {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 20px;
+    width: 20px;
+    background-color: #ccc;
+    border-radius: 4px;
+}
+
+.checkbox-label:hover input ~ .checkmark {
+    background-color: #bbb;
+}
+
+.checkbox-label input:checked ~ .checkmark {
+    background-color: #004080;
+}
+
+#addAdGroupForm button {
+    background-color: #004080;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+#addAdGroupForm button:hover {
+    background-color: #003366;
+}
+
+#addAdGroupForm select,
+#addAdGroupForm span {
+    font-size: 16px;
+    margin-top: 10px;
+    margin-bottom: 20px;
+    display: block;  /* Ensure the description appears below the select */
+}
+
+#addAdGroupForm select {
+    padding: 10px;
+    width: 103%;
+    box-sizing: border-box;  /* Ensure padding doesn't increase width */
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #f8f8f8;
+}
+
+#directionDescription {
+    color: #555;
+    font-style: italic;
+}
+
 .delete-btn {
     background-color: transparent;
     color: #ff0000;
@@ -311,6 +428,59 @@ strong {
 
 .delete-btn:hover {
     color: #cc0000;
+}
+
+.delete-image-btn {
+    background-color: transparent;
+    color: #ff0000;
+    border: none;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.delete-image-btn:hover {
+    color: #fff;
+}
+
+
+.delete-post-btn {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: #003366;
+    color: #fff;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 10px 20px;
+    border-radius: 4px;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.delete-post-btn:hover {
+    background-color: #ff1f1f;
+    color: #fff;
+}
+
+.create-post-btn {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 100%;  /* Full width */
+    background-color: #003366;
+    color: #fff;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 10px 20px;
+    border-radius: 0;  /* No rounded corners at the bottom */
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.create-post-btn:hover {
+    background-color: #02de6c;
+    color: #fff;
 }
 
 .carousel {
@@ -357,6 +527,7 @@ strong {
 .next { right: 10px; }
 
 .post-block {
+    position: relative;
     padding: 10px;
     margin: 5px 0;
     border: 1px solid #ccc;
@@ -370,6 +541,13 @@ strong {
 }
 
 textarea#postContent {
+    font-size: 14px;
+    width: 100%; /* Full width */
+    min-height: 600px; /* Minimum height */
+    resize: vertical; /* Allow vertical resize */
+}
+
+textarea#newPostContent {
     font-size: 14px;
     width: 100%; /* Full width */
     min-height: 600px; /* Minimum height */
@@ -461,4 +639,41 @@ textarea#postContent {
     border: solid white;
     border-width: 0 3px 3px 0;
     transform: rotate(45deg);
+}
+
+#user-group-hashtags {
+    display: flex;
+    align-items: center;
+    background-color: #fff;
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+    width: fit-content;
+}
+
+#user-group-hashtags strong {
+    margin-right: 10px;
+    color: #004080;
+}
+
+#hashtagsInput {
+    border: 1px solid #ccc;
+    padding: 10px;
+    border-radius: 4px;
+    margin-right: 10px;
+}
+
+#saveHashtagsBtn {
+    background-color: #004080;
+    color: #fff;
+    border: none;
+    padding: 10px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background-color 0.3s ease;
+}
+
+#saveHashtagsBtn:hover {
+    background-color: #003366;
 }
