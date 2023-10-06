@@ -677,3 +677,133 @@ textarea#newPostContent {
 #saveHashtagsBtn:hover {
     background-color: #003366;
 }
+
+#top-section {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    margin-bottom: 20px;
+}
+
+#token-section {
+    position: absolute;
+    right: 138%;
+    top: 15%;
+    display: flex;
+    background-color: #fff;
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.input-and-save {
+    display: flex;
+    align-items: center;
+}
+
+#token-section input {
+    padding: 10px;
+    margin-top:2px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    width: 400px; /* Or whatever width you desire */
+}
+
+.get-token-btn {
+    width: 100%;
+    position: relative;
+    background-color: #003366;
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-top: 10px;
+}
+
+.get-token-btn:hover {
+    background-color: #004080;
+}
+
+.save-token-btn {
+    position:relative;
+    top: 33%;
+    background-color: #003366;
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-left: 10px;
+}
+
+.save-token-btn:hover {
+    background-color: #004080;
+}
+
+#user-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-grow: 1;
+}
+
+.login-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.login-overlay .overlay-content {
+    position: fixed;
+    top: 30%;
+    left: 41%;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+    width: 300px; /* Adjusted width */
+}
+
+
+.login-form label {
+    display: block;
+    color: #003366;
+    margin-bottom: 5px;
+}
+
+.login-form input {
+    width: 60%;
+    padding: 10px;
+    margin-bottom: 20px; /* Added space below each input */
+    border-radius: 4px;
+    border: 1px solid #ccc;
+}
+
+.login-form button {
+    background-color: #003366;
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.login-form button:hover {
+    background-color: #004080;
+}
