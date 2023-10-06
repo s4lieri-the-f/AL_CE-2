@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns="http://www.w3.org/1999/html">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,26 +7,26 @@
     <title>User Dashboard</title>
 </head>
 <body>
-    <div id="vk-login-form" style="position: fixed; top: 10px; left: 10px; background-color: #f0f0f0; padding: 10px; border-radius: 5px;">
-        <form action="/login_vk" method="POST" style="display: flex; flex-direction: column;">
-            <label for="vk-id">VK ID:</label>
-            <input type="text" id="vk-id" name="vk_id" required>
-
-            <label for="vk-token">VK Token:</label>
-            <input type="text" id="vk-token" name="vk_token" required>
-
-            <button type="submit" style="margin-top: 10px;">Login via VK</button>
-        </form>
+    <div id="top-section">
+        <div id="token-section">
+            <div class="input-and-save">
+                <input type="text" id="tokenInput" placeholder="Введите ID беседы для логов" value="{{ user_token }}">
+                <button class="save-token-btn" onclick="saveID()">✔️</button>
+            </div>
+            <button class="get-token-btn" onclick="openLoginOverlay()">Войти через VK</button>
+        </div>
+        <div id="user-info">
+            <div id="user-group-link">
+                <a href="{{ user_group_link }}" target="_blank">{{ user_group_link }}</a>
+            </div>
+            <div id="user-group-hashtags">
+                <strong>Хэштеги:</strong>
+                <input type="text" id="hashtagsInput" value="{{ user_group_hashtags }}">
+            <button id="saveHashtagsBtn" onclick="saveHashtags()">✔️</button>
+            </div>
+        </div>
     </div>
 
-    <div id="user-group-link">
-        <a href="{{ user_group_link }}" target="_blank">{{ user_group_link }}</a>
-    </div>
-    <div id="user-group-hashtags">
-        <strong>Хэштеги:</strong>
-            <input type="text" id="hashtagsInput" value="{{ user_group_hashtags }}">
-        <button id="saveHashtagsBtn" onclick="saveHashtags()">✔️</button>
-    </div>
     <div id="content">
         <div id="ad-posts-container">
             <div id="ad-posts" class="scrollable">
@@ -90,6 +90,20 @@
             <button id="showAllAdGroupsBtn">Все рекламные группы</button>
         </div>
     </div>
+
+<div id="loginOverlay" class="overlay login-overlay">
+    <div class="overlay-content">
+        <span class="close-btn" onclick="closeLoginOverlay()">&times;</span>
+        <h2>Войти через VK</h2>
+        <form id="loginForm" class="login-form" action="/your_login_endpoint" method="POST">
+            <label for="username">Логин:</label>
+            <input type="text" id="username" name="username" required><br><br>
+            <label for="password">Пароль:</label>
+            <input type="password" id="password" name="password" required><br><br>
+            <button type="submit">Войти</button>
+        </form>
+    </div>
+</div>
 
 <div id="allAdGroupsOverlay" class="overlay">
     <div class="overlay-content">
@@ -210,6 +224,42 @@
 </div>
 
 <script>
+function vkLogin() {
+    const clientId = '6287487';  // Замените на ваш Client ID
+    const redirectUri = 'https://oauth.vk.com/blank.html';
+    const scope = '77824';
+    const responseType = 'token';
+    const state = 'jaba';
+    const display = 'page';
+    const vkAuthUrl = `https://oauth.vk.com/authorize?client_id=${clientId}&display=${display}&redirect_uri=${redirectUri}&scope=${scope}&response_type=${responseType}&state=${state}&v=5.131`;
+
+    // Открываем новое окно для авторизации VK
+    const vkWindow = window.open(vkAuthUrl, "_blank");
+}
+
+window.addEventListener("message", function(event) {
+    // Убедитесь, что сообщение пришло от доверенного источника
+    if (event.origin !== "http://127.0.0.1:5000") return;
+
+    const token = event.data.token;
+    console.log("Access Token:", token);
+
+    // Далее вы можете использовать токен по своему усмотрению
+}, false);
+
+</script>
+
+<script>
+function openLoginOverlay() {
+    document.getElementById('loginOverlay').style.display = 'flex';
+}
+
+function closeLoginOverlay() {
+    document.getElementById('loginOverlay').style.display = 'none';
+}
+</script>
+
+<script>
 function openCreatePostOverlay() {
     document.getElementById('createPostOverlay').style.display = 'block';
 }
@@ -244,6 +294,7 @@ function submitNewPost() {
     });
 }
 </script>
+
 
 <script>
 document.getElementById('showAllAdGroupsBtn').addEventListener('click', function() {
@@ -557,3 +608,7 @@ function saveHashtags() {
     });
 }
 </script>
+
+
+
+</body>
