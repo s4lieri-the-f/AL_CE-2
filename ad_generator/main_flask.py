@@ -2,6 +2,7 @@ import base64
 
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 import hashlib
+import asyncio
 
 import ad_generator
 
@@ -9,6 +10,7 @@ app = Flask(__name__)
 ad = ad_generator.Ad("user_ad_groups.db3")
 SECRET_KEY = "al_ce-2_soya"
 app.secret_key = base64.b64encode(hashlib.sha256((SECRET_KEY).encode()).digest()).decode()
+
 
 @app.route("/", methods=["GET", "POST"])
 def index():
@@ -27,6 +29,7 @@ def index():
 
     return render_template("index.html", error=error)
 
+
 @app.route('/dashboard')
 def dashboard():
     user_id = session.get('user_id')
@@ -35,11 +38,12 @@ def dashboard():
 
     ad_posts = []
     data = ad.get_user_group_and_posts(ad.get_user_group_id(user_id))
-    if len(data)>0:
+    if len(data) > 0:
         for post in data:
             post_id = post[0]
             images = ad.get_post_images(post_id)
-            encoded_images = [(image[0], "data:image/jpeg;base64," + base64.b64encode(image[1]).decode('utf-8')) for image in images]
+            encoded_images = [(image[0], "data:image/jpeg;base64," + base64.b64encode(image[1]).decode('utf-8')) for
+                              image in images]
             associated_image_ids = [image[0] for image in images]
 
             ad_posts.append((post, encoded_images))
@@ -48,18 +52,16 @@ def dashboard():
         associated_image_ids = [None]
         ad_posts.append((None, encoded_images))
 
-
     all_group_images = [(image[0], "data:image/jpeg;base64," + base64.b64encode(image[1]).decode('utf-8'))
                         for image in ad.get_group_images(ad.get_user_group_id(user_id))]
 
     ad_groups = ad.get_user_group_and_ad_groups(ad.get_user_group_id(user_id))
     user_group_hashtags = ad.get_user_group_and_hashtags(ad.get_user_group_id(user_id))[0][0]
     available_ad_groups = ad.get_all_ad_groups()
-    if user_id<0:
+    if user_id < 0:
         return redirect(url_for('index'))
 
-
-    return render_template('dashboard.html',user_group_hashtags=user_group_hashtags,
+    return render_template('dashboard.html', user_group_hashtags=user_group_hashtags,
                            user_group_link=user_group_link,
                            ad_posts=ad_posts,
                            ad_groups=ad_groups,
@@ -71,19 +73,16 @@ def dashboard():
 @app.route('/upload_image', methods=['POST'])
 def upload_image():
     if 'image' not in request.files:
-
         return redirect(request.url)
 
     file = request.files['image']
 
     if file.filename == '':
-
         return redirect(request.url)
 
     if file and file.filename.endswith(('.png', '.jpg', '.jpeg')):
 
         image_data = file.read()
-
 
         ad.add_post_image_from_bytes(ad.get_user_group_id(session.get('user_id')), image_data)
 
@@ -91,6 +90,7 @@ def upload_image():
 
     else:
         return redirect(request.url)
+
 
 @app.route('/associate_ad_group', methods=['POST'])
 def associate_ad_group():
@@ -101,6 +101,7 @@ def associate_ad_group():
     success = ad.associate_ad_group_db(ad_group_id, user_group_id)
 
     return jsonify(success=success)
+
 
 @app.route('/add_ad_group', methods=['POST'])
 def add_ad_group():
@@ -113,7 +114,7 @@ def add_ad_group():
     user_group_id = ad.get_user_group_id(data.get('userId'))
     row_type = data.get("direction")
 
-    success = ad.add_ad_group(ad_group_link,adGroupHashtags,adGroupPostfix,isAllowed,adGroupPeriod, row_type)
+    success = ad.add_ad_group(ad_group_link, adGroupHashtags, adGroupPostfix, isAllowed, adGroupPeriod, row_type)
 
     return jsonify(success=success)
 
@@ -128,17 +129,17 @@ def delete_association():
 
     return jsonify(success=success)
 
+
 @app.route('/delete_image', methods=['POST'])
 def delete_image():
     data = request.get_json()
     image_id = data.get('imageId')
     user_group_id = ad.get_user_group_id(data.get('userId'))
 
-
     success = ad.delete_image_db(image_id, user_group_id)
 
-
     return jsonify(success=success)
+
 
 @app.route('/delete_post', methods=['POST'])
 def delete_post():
@@ -156,20 +157,20 @@ def get_post_by_id():
     data = request.get_json()
     post_id = data.get('postId')
 
-
     post_content = ad.get_post_by_id(post_id)
 
-
     return jsonify(postContent=post_content)
+
 
 @app.route('/save_hashtags', methods=['POST'])
 def save_hashtags():
     data = request.get_json()
     hashtags = data.get('hashtags')
 
-    ad.update_user_group_hashtags(ad.get_user_group_id(session.get("user_id")),hashtags)
+    ad.update_user_group_hashtags(ad.get_user_group_id(session.get("user_id")), hashtags)
 
     return jsonify(success=True)
+
 
 @app.route('/submit_edit', methods=['POST'])
 def submit_edit():
@@ -184,6 +185,7 @@ def submit_edit():
     success = True
     return jsonify(success=success)
 
+
 @app.route('/submit_new', methods=['POST'])
 def submit_new():
     print("Начинаю добавление!")
@@ -196,6 +198,7 @@ def submit_new():
         success = ad.add_post_image_sync(post_id, i)
 
     return jsonify(success=success)
+
 
 @app.route('/admin')
 def admin_dashboard():

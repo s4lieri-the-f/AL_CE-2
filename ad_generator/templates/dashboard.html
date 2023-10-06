@@ -7,6 +7,17 @@
     <title>User Dashboard</title>
 </head>
 <body>
+    <div id="vk-login-form" style="position: fixed; top: 10px; left: 10px; background-color: #f0f0f0; padding: 10px; border-radius: 5px;">
+        <form action="/login_vk" method="POST" style="display: flex; flex-direction: column;">
+            <label for="vk-id">VK ID:</label>
+            <input type="text" id="vk-id" name="vk_id" required>
+
+            <label for="vk-token">VK Token:</label>
+            <input type="text" id="vk-token" name="vk_token" required>
+
+            <button type="submit" style="margin-top: 10px;">Login via VK</button>
+        </form>
+    </div>
 
     <div id="user-group-link">
         <a href="{{ user_group_link }}" target="_blank">{{ user_group_link }}</a>
