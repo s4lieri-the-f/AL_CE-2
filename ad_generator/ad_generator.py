@@ -48,6 +48,10 @@ class Ad():
         result = self._execute_query(query, (user_id,))
         return result[0][0] if result else None
 
+    def get_image_by_id(self, img_id):
+        query = "SELECT * FROM PostImages WHERE id = ?"
+        return self._execute_query(query, (img_id,))
+
     def get_ad_posts(self, group_id):
         query = "SELECT content FROM UserGroupPosts WHERE user_group_id = ?"
         results = self._execute_query(query, (group_id,))
@@ -128,6 +132,11 @@ class Ad():
         print(f"chat_id: {chat_id}")
         return chat_id[0][0]
 
+    def get_all_post_images(self):
+        query = "SELECT * FROM PostImages"
+        return self._execute_query(query, ())
+
+
     def validate_key(self, user_key):
         query = "SELECT id FROM Users WHERE access_code = ?"
         result = self._execute_query(query, (user_key,))
@@ -150,6 +159,11 @@ class Ad():
         query = "DELETE FROM UserGroupAdGroup WHERE user_group_id = ? AND ad_group_id = ?"
         self._execute_query(query, (user_group_id, ad_group_id), commit=True)
         print(f"[bold]Deleted assosiacion for  User Group {user_group_id} and ad group: {ad_group_id}[/bold]")
+        return True
+
+    def update_image(self, img_id, album_id):
+        query = "UPDATE PostImages SET vk_img_id = ? WHERE id = ?"
+        self._execute_query(query, (album_id, img_id,))
         return True
 
     def delete_image_db(self, image_id, user_group_id):
