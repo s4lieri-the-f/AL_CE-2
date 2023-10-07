@@ -9,7 +9,7 @@ from rich import print
 log_id = 2000000014
 
 # init
-#alice = vksender.SimpleVKClient(login="karuizawalice@gmail.com", password="|Dat4Lymb0#|")
+#alice = vksender.SimpleVKClient(token='vk1.a.wEYAF0npApY_UajdZIW_4excc3H_u82dpb24uPcAdJMEeUsDdATqu7Xnph91tI74igxCPAxXol2B61oP0t9AvhNRU_84pmdH-q6m38h1jpKNszKoZtpN0Ijob42ilOWcT5oSmQ0h8CLEnnDzODOKONc6QfSBMa4zAFLAamnS7BaMO_qZa5xKJdxSk8GAtgtv')
 
 # теперь инициализировать всех платников муахаха
 #alice.send_message(f"[{datetime.now()}] Main loopcycle initiated, now fetching data from DB, then waiting for midnight.", log_id)
@@ -29,7 +29,7 @@ ct = datetime.now()
 midnight = ct.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
 time_left = midnight - ct
 
-# sleep(time_left.total_seconds())
+#sleep(time_left.total_seconds())
 
 while True:
     users = ad.get_all_users()
