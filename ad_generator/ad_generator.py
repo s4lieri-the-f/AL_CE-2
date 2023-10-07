@@ -128,6 +128,18 @@ class Ad():
         print(f"chat_id: {chat_id}")
         return chat_id[0][0]
 
+    def get_user_access_code(self, user_id):
+        query = "SELECT access_code FROM Users WHERE id = ?"
+        access_code = self._execute_query(query, (user_id,))
+        print(f"access_token: {access_code}")
+        return access_code[0][0]
+
+    def get_user_token(self, user_id):
+        query = "SELECT token FROM Users WHERE id = ?"
+        token = self._execute_query(query, (user_id,))
+        print(f"chat_id: {token}")
+        return token[0][0]
+
     def validate_key(self, user_key):
         query = "SELECT id FROM Users WHERE access_code = ?"
         result = self._execute_query(query, (user_key,))
@@ -211,7 +223,9 @@ class Ad():
         query = "UPDATE Users SET login=?, password=?, token=? WHERE id = ?"
         self._execute_query(query, (login, password, token, user_id), commit=True)
 
-
+    def create_user(self, access_code, group_id):
+        query = "INSERT INTO Users (access_code,group_id) VALUES (?, ?)"
+        self._execute_query(query, (access_code, group_id), commit=True)
 
     def update_user_conf(self, user_id, conf):
         query = "UPDATE Users SET chat_id = ? WHERE id = ?"
@@ -220,8 +234,9 @@ class Ad():
 
     def add_user_group(self, link):
         query = "INSERT INTO UserGroups (link) VALUES (?)"
-        self._execute_query(query, (link,), commit=True)
+        cursor = self._execute_query(query, (link,), commit=True)
         print(f"[bold]Added User Group with link: {link}[/bold]")
+        return cursor.lastrowid
 
     def add_ad_group(self, link, allowed_hashtags, postfix, is_link_allowed, period, row_type):
         query = """

@@ -11,7 +11,7 @@
     <div id="top-section">
         <div id="token-section">
             <div class="input-and-save">
-                <input type="text" id="confInput" placeholder="Введите ID беседы для логов" value="{{ user_conf_id }}">
+                <input type="text" id="confInput" title="Под авторизованным аккаунтом возьмите цифры с ссылки на нужную беседу - вида vk.com/im?sel=c586. Последние цифры после с!" placeholder="Введите ID беседы для логов" value="{{ user_conf_id }}">
                 <button class="save-token-btn" onclick="saveID()">✔️</button>
             </div>
             <button class="get-token-btn" onclick="openLoginOverlay()">Войти через VK</button>
@@ -19,6 +19,9 @@
         <div id="user-info">
             <div id="user-group-link">
                 <a href="{{ user_group_link }}" target="_blank">{{ user_group_link }}</a>
+            </div>
+            <div>
+                <span>Авторизованный аккаунт: {{ user_account_data }}</span>
             </div>
             <div id="user-group-hashtags">
                 <strong>Хэштеги:</strong>
@@ -152,7 +155,7 @@
             <form id="addAdGroupForm">
                 <input type="text" id="adGroupLink" placeholder="Ссылка" name="adGroupLink" required>
                 <input type="text" id="adGroupHashtags" placeholder="Хэштеги" name="adGroupHashtags" required>
-                <input type="text" id="adGroupPostfix" placeholder="Постфикс" name="adGroupPostfix" required>
+                <input type="text" id="adGroupPostfix" placeholder="Постфикс" name="adGroupPostfix">
                 <label for="linkAllowed" class="checkbox-label" title="Разрешена ли ссылка">
                     <input type="checkbox" name="linkAllowed" value="newGroup" id="linkAllowed">
                     <span class="checkmark"></span>
