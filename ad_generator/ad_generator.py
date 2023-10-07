@@ -31,7 +31,11 @@ class Ad():
         groups = self._execute_query(query)
         print("[bold]User Groups:[/bold]")
         print(groups)
-        return  groups
+        return groups
+
+    def get_all_users(self):
+        users = self._execute_query("SELECT * FROM Users")
+        return users[1:]
 
     def get_user_group_link(self, user_id):
         # Предполагается, что у вас есть таблица UserGroups с полями id и link
@@ -63,7 +67,7 @@ class Ad():
     
     def get_post_by_id(self, post_id):
         query = "SELECT content FROM UserGroupPosts WHERE id = ?"
-        post = self._execute_query(query, (post_id,))
+        post = self._execute_query(query, (str(post_id),))
         return post
 
     def get_user_group_and_hashtags(self, group_id):
@@ -81,21 +85,17 @@ class Ad():
         """
         ad_groups = self._execute_query(query, (group_id,))
         print(f"[bold]Ad Groups for User Group {group_id}:[/bold]")
-        print(ad_groups)
         return ad_groups
 
     def get_all_ad_groups(self):
         query = "SELECT * FROM AdGroups"
         ad_groups = self._execute_query(query)
         print("[bold]Ad Groups:[/bold]")
-        print(ad_groups)
         return ad_groups
 
     def get_ad_group(self, ad_group_id):
         query = "SELECT * FROM AdGroups WHERE id = ?"
         ad_group = self._execute_query(query, (ad_group_id,))
-        print(f"[bold]Ad Group {ad_group_id}:[/bold]")
-        print(ad_group)
         return  ad_group
 
     def get_post_images(self, post_id):
@@ -107,6 +107,15 @@ class Ad():
             """
         images = self._execute_query(query, (post_id,))
         return [image for image in images]
+
+    def get_ad_post_ids(self, user_group_id):
+        query = """SELECT
+        id
+        FROM
+        UserGroupPosts
+        WHERE
+        user_group_id = ?"""
+        return [post_id[0] for post_id in self._execute_query(query, (user_group_id, ))]
 
     def get_group_images(self, group_id):
         query = "SELECT id, image FROM PostImages WHERE group_id = ?"

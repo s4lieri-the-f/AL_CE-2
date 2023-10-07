@@ -226,6 +226,9 @@ def key_validator():
 
     return render_template("keys.html", message=message)
 
+@app.route("/login_vk", methods=["GET", "POST"])
+def login():
+    logon = request.get_json().get("vk_id")
 
 def generate_key(some_string, secret_key, length=12):
     sha_signature = hashlib.sha256((some_string + secret_key).encode()).digest()
