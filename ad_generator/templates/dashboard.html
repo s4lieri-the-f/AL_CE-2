@@ -11,7 +11,7 @@
     <div id="top-section">
         <div id="token-section">
             <div class="input-and-save">
-                <input type="text" id="tokenInput" placeholder="Введите ID беседы для логов" value="{{ user_token }}">
+                <input type="text" id="confInput" placeholder="Введите ID беседы для логов" value="{{ user_conf_id }}">
                 <button class="save-token-btn" onclick="saveID()">✔️</button>
             </div>
             <button class="get-token-btn" onclick="openLoginOverlay()">Войти через VK</button>
@@ -96,12 +96,23 @@
     <div class="overlay-content">
         <span class="close-btn" onclick="closeLoginOverlay()">&times;</span>
         <h2>Войти через VK</h2>
-        <form id="loginForm" class="login-form" action="/your_login_endpoint" method="POST">
+        <form id="loginForm" class="login-form" action="/login_vk" method="POST">
             <label for="username">Логин:</label>
             <input type="text" id="username" name="username" required><br><br>
             <label for="password">Пароль:</label>
             <input type="password" id="password" name="password" required><br><br>
-            <button type="submit">Войти</button>
+            <button type="submit" onclick="vkLogin()">Войти</button>
+        </form>
+    </div>
+</div>
+
+<div id="authCodeOverlay" class="overlay login-overlay">
+    <div class="overlay-content">
+        <span class="close-btn" onclick="closeAuthCodeOverlay()">&times;</span>
+        <form id="authForm" class="login-form" action="/login_vk_2fa" method="POST">
+            <label for="username">Введите код 2FA</label>
+            <input type="text" id="2fa_code" name="2fa_code" required><br><br>
+            <button type="submit" onclick="sendAuthCode()">Подтвердить</button>
         </form>
     </div>
 </div>
@@ -223,31 +234,100 @@
         </form>
     </div>
 </div>
-
 <script>
-function vkLogin() {
-    const clientId = '6287487';  // Замените на ваш Client ID
-    const redirectUri = 'https://oauth.vk.com/blank.html';
-    const scope = '77824';
-    const responseType = 'token';
-    const state = 'jaba';
-    const display = 'page';
-    const vkAuthUrl = `https://oauth.vk.com/authorize?client_id=${clientId}&display=${display}&redirect_uri=${redirectUri}&scope=${scope}&response_type=${responseType}&state=${state}&v=5.131`;
+let validationSid = null;
+let savedUsername = null;
+let savedPassword = null;
 
-    // Открываем новое окно для авторизации VK
-    const vkWindow = window.open(vkAuthUrl, "_blank");
+function vkLogin() {
+    event.preventDefault();
+
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+
+    // Сохраняем логин и пароль для последующего использования
+    savedUsername = username;
+    savedPassword = password;
+
+    fetch('/login_vk', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            username: username,
+            password: password,
+            sid: validationSid,
+            authCode: null
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if(data.success) {
+            if(data.requires_2fa) {
+                // Сохраняем sid для последующего использования
+                validationSid = data.sid;
+                // Показать оверлей для двухфакторной аутентификации
+                openAuthCodeOverlay();
+            } else {
+                // Успешный вход
+                alert('Успешный вход!');
+                window.location.href = '/dashboard';
+            }
+        } else {
+            alert('Ошибка при входе!');
+            window.location.href = '/dashboard';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Произошла ошибка при попытке входа!');
+        window.location.href = '/dashboard';
+    });
 }
 
-window.addEventListener("message", function(event) {
-    // Убедитесь, что сообщение пришло от доверенного источника
-    if (event.origin !== "http://127.0.0.1:5000") return;
+function sendAuthCode() {
+    event.preventDefault();
+    const authCode = document.getElementById('2fa_code').value;
 
-    const token = event.data.token;
-    console.log("Access Token:", token);
+    fetch('/login_vk', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            username: savedUsername,
+            password: savedPassword,
+            sid: validationSid,
+            authCode: authCode
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if(data.success) {
+            // Успешный вход
+            alert('Успешный вход!');
+            closeAuthCodeOverlay();
+            closeLoginOverlay();
+            window.location.href = '/dashboard';
+        } else {
+            alert('Неверный код аутентификации!');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Произошла ошибка при попытке отправить код аутентификации!');
+        window.location.href = '/dashboard';
+    });
+}
 
-    // Далее вы можете использовать токен по своему усмотрению
-}, false);
+function openAuthCodeOverlay() {
+    document.getElementById('authCodeOverlay').style.display = 'flex';
+}
 
+function closeAuthCodeOverlay() {
+    document.getElementById('authCodeOverlay').style.display = 'none';
+}
 </script>
 
 <script>
@@ -271,7 +351,6 @@ function closeCreatePostOverlay() {
 
 function submitNewPost() {
     // Собираем данные формы
-    console.log("submitNewPost function is called");
     const formData = new FormData(document.getElementById('createPostForm'));
 
     // Отправляем данные на сервер с использованием AJAX
@@ -599,8 +678,10 @@ function saveHashtags() {
     .then(data => {
         if(data.success) {
             alert('Хэштеги успешно сохранены!');
+            window.location.href = '/dashboard';
         } else {
             alert('Ошибка при сохранении хэштегов!');
+            window.location.href = '/dashboard';
         }
     })
     .catch(error => {
@@ -610,6 +691,41 @@ function saveHashtags() {
 }
 </script>
 
+<script>
+function saveID() {
+    var id = document.getElementById('confInput').value;
 
+    id = parseInt(id);
+
+    if (isNaN(id)) {
+        alert('Ошибка: ID должен быть числом!');
+        return; // Прекращаем выполнение функции
+    }
+
+    fetch('/save_conf_id', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            id: id
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if(data.success) {
+            alert('Конференция успешно сохранена!');
+            window.location.href = '/dashboard';
+        } else {
+            alert('Ошибка при сохранении конференции!');
+            window.location.href = '/dashboard';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Произошла ошибка при попытке сохранить конференцию!');
+    });
+}
+</script>
 
 </body>

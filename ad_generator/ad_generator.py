@@ -122,6 +122,12 @@ class Ad():
         images = self._execute_query(query, (group_id,))
         return [image for image in images]
 
+    def get_user_chat_id(self, user_id):
+        query = "SELECT chat_id FROM Users WHERE id = ?"
+        chat_id = self._execute_query(query, (user_id,))
+        print(f"chat_id: {chat_id}")
+        return chat_id[0][0]
+
     def validate_key(self, user_key):
         query = "SELECT id FROM Users WHERE access_code = ?"
         result = self._execute_query(query, (user_key,))
@@ -200,6 +206,17 @@ class Ad():
     def update_post(self, post_id, post_content):
         query = "UPDATE UserGroupPosts SET content = ? WHERE id = ?"
         self._execute_query(query, (post_content, post_id), commit=True)
+
+    def update_user(self, user_id, login, password, token):
+        query = "UPDATE Users SET login=?, password=?, token=? WHERE id = ?"
+        self._execute_query(query, (login, password, token, user_id), commit=True)
+
+
+
+    def update_user_conf(self, user_id, conf):
+        query = "UPDATE Users SET chat_id = ? WHERE id = ?"
+        self._execute_query(query, (conf+2000000000, user_id), commit=True)
+        return True
 
     def add_user_group(self, link):
         query = "INSERT INTO UserGroups (link) VALUES (?)"
