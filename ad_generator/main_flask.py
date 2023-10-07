@@ -3,7 +3,7 @@ import base64
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 import hashlib
 import asyncio
-
+import requests
 import ad_generator
 
 app = Flask(__name__)
@@ -58,6 +58,8 @@ def dashboard():
     ad_groups = ad.get_user_group_and_ad_groups(ad.get_user_group_id(user_id))
     user_group_hashtags = ad.get_user_group_and_hashtags(ad.get_user_group_id(user_id))[0][0]
     available_ad_groups = ad.get_all_ad_groups()
+    user_conf_id = ad.get_user_chat_id(user_id)
+
     if user_id < 0:
         return redirect(url_for('index'))
 
@@ -67,7 +69,8 @@ def dashboard():
                            ad_groups=ad_groups,
                            available_ad_groups=available_ad_groups,
                            group_images=all_group_images,
-                           associated_image_ids=associated_image_ids)
+                           associated_image_ids=associated_image_ids,
+                           user_conf_id=user_conf_id)
 
 
 @app.route('/upload_image', methods=['POST'])
@@ -171,6 +174,15 @@ def save_hashtags():
 
     return jsonify(success=True)
 
+@app.route('/save_conf_id', methods=['POST'])
+def save_conf_id():
+    data = request.get_json()
+    id = data.get('id')
+
+    ad.update_user_conf(session.get("user_id"), id)
+
+    return jsonify(success=True)
+
 
 @app.route('/submit_edit', methods=['POST'])
 def submit_edit():
@@ -226,15 +238,69 @@ def key_validator():
 
     return render_template("keys.html", message=message)
 
-@app.route("/login_vk", methods=["GET", "POST"])
-def login():
-    logon = request.get_json().get("vk_id")
+@app.route("/login_vk", methods=["POST"])
+def login_vk():
+    data = request.get_json()
+    print(data)
+    if not data:
+        return jsonify(success=False, error="Invalid JSON"), 400
+    login = data.get("username")
+    password = data.get("password")
+    try:
+        twofa = data.get("authCode")
+        validation_sid = data.get("sid")
+    except:
+        twofa = None
+        validation_sid = None
+    token = login_to_vk(login,password, twofa, validation_sid)
+    if token[0] == "need_validation":
+        if not twofa:
+            return jsonify(success=True, requires_2fa=True, sid=token[1])
+    elif "error" in token:
+        return jsonify(success=False)
+    else:
+        ad.update_user(session.get("user_id"), login, password, token)
+        return jsonify(success=True)
+
 
 def generate_key(some_string, secret_key, length=12):
     sha_signature = hashlib.sha256((some_string + secret_key).encode()).digest()
     b64_signature = base64.b64encode(sha_signature).decode()
     return b64_signature[:length]
 
+def login_to_vk(login, password, twofa, validation_sid):
+    if not twofa:
+        response = requests.get(
+            "https://oauth.vk.com/token?grant_type=password",
+            params={
+                "grant_type": "password",
+                "client_id": 2274003,
+                "client_secret": "hHbZxrka2uZ6jB1inYsH",
+                "username": login,
+                "password": password,
+                "v": "5.131",
+            },
+        )
+    else:
+        params = {
+            "grant_type": "password",
+            "client_id": 2274003,
+            "client_secret": "hHbZxrka2uZ6jB1inYsH",
+            "username": login,
+            "password": password,
+            "code": twofa,
+            "validation_sid": validation_sid,
+            "v": "5.131"
+        }
+
+        response = requests.get("https://oauth.vk.com/token?grant_type=password", params=params)
+    token_data = response.json()
+    if token_data.get('error') == 'need_validation':
+        validation_sid = token_data['validation_sid']
+        return "need_validation", validation_sid
+    elif token_data.get("error"):
+        return f"error: {token_data.get('error')}"
+    return token_data.get("access_token", "")
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0")
