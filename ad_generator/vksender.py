@@ -1,5 +1,6 @@
 import requests
 from json import loads
+import os
 
 class SimpleVKClient:
     def __init__(self, token: str, vk_ver: str = "5.131"):
@@ -18,22 +19,38 @@ class SimpleVKClient:
         response = requests.post(link, data=data)
         # Если нужно обработать ответ от VK API, делаем это тут
 
-    def save_image(self, path_to_image: str) -> str:
+    def create_album(self, title):
+        link = "https://api.vk.com/method/photos.createAlbum"
+        data = {
+            "title": title,
+            "privacy": 3
+        }
+        response = loads(requests.post(link, data=data).content)
+        return response["response"]["id"]
+
+    def save_image(self, image, album_id: str) -> str:
         link = "https://api.vk.com/method/photos.getUploadServer"
-        data = {"album_id": self.album_id, "access_token": self.token, "v": self.vk_ver}
+        data = {"album_id": album_id, "access_token": self.token, "v": self.vk_ver}
 
         upload_link = loads(requests.post(link, data=data).content)["response"][
             "upload_url"
         ]
+
+        with open('tmp.jpg', 'wb') as FILE:
+            FILE.write(image)
+
         to_save = loads(
             requests.post(
-                upload_link, files={"file1": open(path_to_image, "rb")}
+                upload_link, files={"file1": open("tmp.jpg", 'rb')}
             ).content
         )
+        os.remove('tmp.jpg')
+
+
 
         link = "https://api.vk.com/method/photos.save"
         data = {
-            "album_id": self.album_id,
+            "album_id": album_id,
             "server": to_save["server"],
             "photos_list": to_save["photos_list"],
             "hash": to_save["hash"],
@@ -43,6 +60,7 @@ class SimpleVKClient:
         }
 
         photo_id = loads(requests.post(link, data).content)
+        print(photo_id)
         return (
             "photo"
             + str(photo_id["response"][0]["owner_id"])
@@ -50,11 +68,11 @@ class SimpleVKClient:
             + str(photo_id["response"][0]["id"])
         )
 
-    def wall_post(self, id: int, text: str, path_to_img: str) -> str:
+    def wall_post(self, id: int, text: str, image_id) -> str:
         link = "https://api.vk.com/method/wall.post"
         data = {
             "owner_id": id,
-            "attachments": self.save_image(path_to_img),
+            "attachments": image_id,
             "from_group": 1,
             "message": text,
             "access_token": self.token,
