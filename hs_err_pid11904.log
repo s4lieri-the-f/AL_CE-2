@@ -1,0 +1,240 @@
+#
+# There is insufficient memory for the Java Runtime Environment to continue.
+# Native memory allocation (mmap) failed to map 268435456 bytes for G1 virtual space
+# Possible reasons:
+#   The system is out of physical RAM or swap space
+#   The process is running with CompressedOops enabled, and the Java Heap may be blocking the growth of the native heap
+# Possible solutions:
+#   Reduce memory load on the system
+#   Increase physical memory or swap space
+#   Check if swap backing store is full
+#   Decrease Java heap size (-Xmx/-Xms)
+#   Decrease number of Java threads
+#   Decrease Java thread stack sizes (-Xss)
+#   Set larger code cache with -XX:ReservedCodeCacheSize=
+#   JVM is running with Unscaled Compressed Oops mode in which the Java heap is
+#     placed in the first 4GB address space. The Java Heap base address is the
+#     maximum limit for the native heap growth. Please use -XX:HeapBaseMinAddress
+#     to set the Java Heap base and to place the Java Heap above 4GB virtual address.
+# This output file may be truncated or incomplete.
+#
+#  Out of Memory Error (os_windows.cpp:3829), pid=11904, tid=9384
+#
+# JRE version:  (17.0.8+7) (build )
+# Java VM: OpenJDK 64-Bit Server VM (17.0.8+7-b1000.8, mixed mode, sharing, tiered, compressed oops, compressed class ptrs, g1 gc, windows-amd64)
+# No core dump will be written. Minidumps are not enabled by default on client versions of Windows
+#
+
+---------------  S U M M A R Y ------------
+
+Command Line: -Dorg.sqlite.tmpdir=C:\Users\apras\AppData\Local\JetBrains\PyCharm2023.2\jdbc-native-deps\Xerial SQLiteJDBC\3.43.0\sqlite-jdbc-3.43.0.0\libs -Djava.rmi.server.hostname=127.0.0.1 -Duser.timezone=UTC -Xmx2048m -Xms256m -Djna.boot.library.path=C:\Program Files\JetBrains\PyCharm 2023.2.1/lib/jna/amd64 -Djna.nosys=true -Djna.noclasspath=true -Djdbc.classpath=C:\Program Files\JetBrains\PyCharm 2023.2.1\plugins\DatabaseTools\lib\jdbc-console.jar;C:\Users\apras\AppData\Roaming\JetBrains\PyCharm2023.2\jdbc-drivers\Xerial SQLiteJDBC\3.43.0\org\xerial\sqlite-jdbc\3.43.0.0\sqlite-jdbc-3.43.0.0.jar --add-exports=java.desktop/sun.awt=ALL-UNNAMED --add-exports=java.desktop/java.awt.peer=ALL-UNNAMED --add-opens=java.desktop/java.awt=ALL-UNNAMED --add-opens=jdk.unsupported/sun.misc=ALL-UNNAMED --add-opens=java.base/java.nio=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED -Dfile.encoding=UTF-8 com.intellij.database.remote.RemoteJdbcServer org.sqlite.JDBC
+
+Host: Intel(R) Core(TM) i5-10300H CPU @ 2.50GHz, 8 cores, 15G,  Windows 10 , 64 bit Build 19041 (10.0.19041.3393)
+Time: Thu Oct  5 22:03:24 2023 RTZ 2 (s 10 , 64 bit Build 19041 (10.0.19041.3393) elapsed time: 0.014630 seconds (0d 0h 0m 0s)
+
+---------------  T H R E A D  ---------------
+
+Current thread (0x0000028f792ed8b0):  JavaThread "Unknown thread" [_thread_in_vm, id=9384, stack(0x000000afd6300000,0x000000afd6400000)]
+
+Stack: [0x000000afd6300000,0x000000afd6400000]
+Native frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
+V  [jvm.dll+0x6852da]
+V  [jvm.dll+0x844c84]
+V  [jvm.dll+0x84659e]
+V  [jvm.dll+0x846c03]
+V  [jvm.dll+0x24b7cf]
+V  [jvm.dll+0x682049]
+V  [jvm.dll+0x67671a]
+V  [jvm.dll+0x30be2b]
+V  [jvm.dll+0x3132d6]
+V  [jvm.dll+0x36302e]
+V  [jvm.dll+0x36325f]
+V  [jvm.dll+0x2e1f48]
+V  [jvm.dll+0x2e2eb4]
+V  [jvm.dll+0x815c11]
+V  [jvm.dll+0x370df1]
+V  [jvm.dll+0x7f4fdc]
+V  [jvm.dll+0x3f3f1f]
+V  [jvm.dll+0x3f5b31]
+C  [jli.dll+0x528f]
+C  [ucrtbase.dll+0x21bb2]
+C  [KERNEL32.DLL+0x17344]
+C  [ntdll.dll+0x526b1]
+
+
+---------------  P R O C E S S  ---------------
+
+Threads class SMR info:
+_java_thread_list=0x00007ffeabdc0098, length=0, elements={
+}
+
+Java Threads: ( => current thread )
+
+Other Threads:
+  0x0000028f7934a010 GCTaskThread "GC Thread#0" [stack: 0x000000afd6400000,0x000000afd6500000] [id=22176]
+  0x0000028f7935ad10 ConcurrentGCThread "G1 Main Marker" [stack: 0x000000afd6500000,0x000000afd6600000] [id=18524]
+  0x0000028f7935b4d0 ConcurrentGCThread "G1 Conc#0" [stack: 0x000000afd6600000,0x000000afd6700000] [id=2448]
+
+[error occurred during error reporting (printing all threads), id 0xc0000005, EXCEPTION_ACCESS_VIOLATION (0xc0000005) at pc=0x00007ffeab572ab7]
+
+VM state: not at safepoint (not fully initialized)
+
+VM Mutex/Monitor currently owned by a thread:  ([mutex/lock_event])
+[0x0000028f792e9450] Heap_lock - owner thread: 0x0000028f792ed8b0
+
+Heap address: 0x0000000080000000, size: 2048 MB, Compressed Oops mode: 32-bit
+
+CDS archive(s) mapped at: [0x0000000000000000-0x0000000000000000-0x0000000000000000), size 0, SharedBaseAddress: 0x0000000800000000, ArchiveRelocationMode: 1.
+Narrow klass base: 0x0000000000000000, Narrow klass shift: 0, Narrow klass range: 0x0
+
+GC Precious Log:
+<Empty>
+
+Heap:
+ garbage-first heap   total 0K, used 0K [0x0000000080000000, 0x0000000100000000)
+  region size 1024K, 0 young (0K), 0 survivors (0K)
+ Metaspace       used 0K, committed 0K, reserved 0K
+  class space    used 0K, committed 0K, reserved 0K
+
+Heap Regions: E=young(eden), S=young(survivor), O=old, HS=humongous(starts), HC=humongous(continues), CS=collection set, F=free, OA=open archive, CA=closed archive, TAMS=top-at-mark-start (previous, next)
+
+Card table byte_map: [0x0000028f7f0a0000,0x0000028f7f4a0000] _byte_map_base: 0x0000028f7eca0000
+
+Marking Bits (Prev, Next): (CMBitMap*) 0x0000028f7934a3e0, (CMBitMap*) 0x0000028f7934a420
+ Prev Bits: [0x0000028f0f000000, 0x0000028f11000000)
+ Next Bits: [0x0000028f11000000, 0x0000028f13000000)
+
+GC Heap History (0 events):
+No events
+
+Dll operation events (1 events):
+Event: 0.008 Loaded shared library C:\Program Files\JetBrains\PyCharm 2023.2.1\jbr\bin\java.dll
+
+Deoptimization events (0 events):
+No events
+
+Classes unloaded (0 events):
+No events
+
+Classes redefined (0 events):
+No events
+
+Internal exceptions (0 events):
+No events
+
+VM Operations (0 events):
+No events
+
+Events (0 events):
+No events
+
+
+Dynamic libraries:
+0x00007ff753d00000 - 0x00007ff753d0a000 	C:\Program Files\JetBrains\PyCharm 2023.2.1\jbr\bin\java.exe
+0x00007fff01670000 - 0x00007fff01868000 	C:\Windows\SYSTEM32\ntdll.dll
+0x00007fff011f0000 - 0x00007fff012ad000 	C:\Windows\System32\KERNEL32.DLL
+0x00007ffefee00000 - 0x00007ffeff0f6000 	C:\Windows\System32\KERNELBASE.dll
+0x00007ffeff5d0000 - 0x00007ffeff6d0000 	C:\Windows\System32\ucrtbase.dll
+0x00007ffed6b40000 - 0x00007ffed6b57000 	C:\Program Files\JetBrains\PyCharm 2023.2.1\jbr\bin\jli.dll
+0x00007ffeffb10000 - 0x00007ffeffcae000 	C:\Windows\System32\USER32.dll
+0x00007ffef7960000 - 0x00007ffef797b000 	C:\Program Files\JetBrains\PyCharm 2023.2.1\jbr\bin\VCRUNTIME140.dll
+0x00007ffefed50000 - 0x00007ffefed72000 	C:\Windows\System32\win32u.dll
+0x00007ffee68a0000 - 0x00007ffee6b3a000 	C:\Windows\WinSxS\amd64_microsoft.windows.common-controls_6595b64144ccf1df_6.0.19041.1110_none_60b5254171f9507e\COMCTL32.dll
+0x00007fff01600000 - 0x00007fff0162c000 	C:\Windows\System32\GDI32.dll
+0x00007fff00e10000 - 0x00007fff00eae000 	C:\Windows\System32\msvcrt.dll
+0x00007ffeff4b0000 - 0x00007ffeff5ca000 	C:\Windows\System32\gdi32full.dll
+0x00007ffeff3a0000 - 0x00007ffeff43d000 	C:\Windows\System32\msvcp_win.dll
+0x00007fff011c0000 - 0x00007fff011f0000 	C:\Windows\System32\IMM32.DLL
+0x00007ffed40c0000 - 0x00007ffed40cc000 	C:\Program Files\JetBrains\PyCharm 2023.2.1\jbr\bin\vcruntime140_1.dll
+0x00007ffeaefb0000 - 0x00007ffeaf03d000 	C:\Program Files\JetBrains\PyCharm 2023.2.1\jbr\bin\msvcp140.dll
+0x00007ffeab280000 - 0x00007ffeabf03000 	C:\Program Files\JetBrains\PyCharm 2023.2.1\jbr\bin\server\jvm.dll
+0x00007fff01310000 - 0x00007fff013be000 	C:\Windows\System32\ADVAPI32.dll
+0x00007fff00880000 - 0x00007fff0091c000 	C:\Windows\System32\sechost.dll
+0x00007fff00ce0000 - 0x00007fff00e06000 	C:\Windows\System32\RPCRT4.dll
+0x00007ffee5cd0000 - 0x00007ffee5cd9000 	C:\Windows\SYSTEM32\WSOCK32.dll
+0x00007ffefe270000 - 0x00007ffefe2bb000 	C:\Windows\SYSTEM32\POWRPROF.dll
+0x00007fff00a60000 - 0x00007fff00acb000 	C:\Windows\System32\WS2_32.dll
+0x00007ffeebce0000 - 0x00007ffeebd07000 	C:\Windows\SYSTEM32\WINMM.dll
+0x00007ffef7e50000 - 0x00007ffef7e5a000 	C:\Windows\SYSTEM32\VERSION.dll
+0x00007ffefe130000 - 0x00007ffefe142000 	C:\Windows\SYSTEM32\UMPDC.dll
+0x00007ffefd520000 - 0x00007ffefd532000 	C:\Windows\SYSTEM32\kernel.appcore.dll
+0x00007ffef8880000 - 0x00007ffef888a000 	C:\Program Files\JetBrains\PyCharm 2023.2.1\jbr\bin\jimage.dll
+0x00007ffefc950000 - 0x00007ffefcb34000 	C:\Windows\SYSTEM32\DBGHELP.DLL
+0x00007ffecd400000 - 0x00007ffecd434000 	C:\Windows\SYSTEM32\dbgcore.DLL
+0x00007ffeff310000 - 0x00007ffeff392000 	C:\Windows\System32\bcryptPrimitives.dll
+0x00007ffee8e50000 - 0x00007ffee8e75000 	C:\Program Files\JetBrains\PyCharm 2023.2.1\jbr\bin\java.dll
+
+dbghelp: loaded successfully - version: 4.0.5 - missing functions: none
+symbol engine: initialized successfully - sym options: 0x614 - pdb path: .;C:\Program Files\JetBrains\PyCharm 2023.2.1\jbr\bin;C:\Windows\SYSTEM32;C:\Windows\WinSxS\amd64_microsoft.windows.common-controls_6595b64144ccf1df_6.0.19041.1110_none_60b5254171f9507e;C:\Program Files\JetBrains\PyCharm 2023.2.1\jbr\bin\server
+
+VM Arguments:
+jvm_args: -Dorg.sqlite.tmpdir=C:\Users\apras\AppData\Local\JetBrains\PyCharm2023.2\jdbc-native-deps\Xerial SQLiteJDBC\3.43.0\sqlite-jdbc-3.43.0.0\libs -Djava.rmi.server.hostname=127.0.0.1 -Duser.timezone=UTC -Xmx2048m -Xms256m -Djna.boot.library.path=C:\Program Files\JetBrains\PyCharm 2023.2.1/lib/jna/amd64 -Djna.nosys=true -Djna.noclasspath=true -Djdbc.classpath=C:\Program Files\JetBrains\PyCharm 2023.2.1\plugins\DatabaseTools\lib\jdbc-console.jar;C:\Users\apras\AppData\Roaming\JetBrains\PyCharm2023.2\jdbc-drivers\Xerial SQLiteJDBC\3.43.0\org\xerial\sqlite-jdbc\3.43.0.0\sqlite-jdbc-3.43.0.0.jar --add-exports=java.desktop/sun.awt=ALL-UNNAMED --add-exports=java.desktop/java.awt.peer=ALL-UNNAMED --add-opens=java.desktop/java.awt=ALL-UNNAMED --add-opens=jdk.unsupported/sun.misc=ALL-UNNAMED --add-opens=java.base/java.nio=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED -Dfile.encoding=UTF-8 
+java_command: com.intellij.database.remote.RemoteJdbcServer org.sqlite.JDBC
+java_class_path (initial): C:\Program Files\JetBrains\PyCharm 2023.2.1\lib\util_rt.jar;C:\Program Files\JetBrains\PyCharm 2023.2.1\lib\util-8.jar;C:\Program Files\JetBrains\PyCharm 2023.2.1\lib\groovy.jar;C:\Program Files\JetBrains\PyCharm 2023.2.1\plugins\DatabaseTools\lib\jdbc-console.jar;C:\Program Files\JetBrains\PyCharm 2023.2.1\plugins\grid-core-impl\lib\jdbc-console-types.jar;C:\Program Files\JetBrains\PyCharm 2023.2.1\lib\util.jar;C:\Program Files\JetBrains\PyCharm 2023.2.1\lib\bouncy-castle.jar
+Launcher Type: SUN_STANDARD
+
+[Global flags]
+     intx CICompilerCount                          = 4                                         {product} {ergonomic}
+     uint ConcGCThreads                            = 2                                         {product} {ergonomic}
+     uint G1ConcRefinementThreads                  = 8                                         {product} {ergonomic}
+   size_t G1HeapRegionSize                         = 1048576                                   {product} {ergonomic}
+    uintx GCDrainStackTargetSize                   = 64                                        {product} {ergonomic}
+   size_t InitialHeapSize                          = 268435456                                 {product} {command line}
+   size_t MarkStackSize                            = 4194304                                   {product} {ergonomic}
+   size_t MaxHeapSize                              = 2147483648                                {product} {command line}
+   size_t MinHeapDeltaBytes                        = 1048576                                   {product} {ergonomic}
+   size_t MinHeapSize                              = 268435456                                 {product} {command line}
+    uintx NonNMethodCodeHeapSize                   = 5839372                                {pd product} {ergonomic}
+    uintx NonProfiledCodeHeapSize                  = 122909434                              {pd product} {ergonomic}
+    uintx ProfiledCodeHeapSize                     = 122909434                              {pd product} {ergonomic}
+    uintx ReservedCodeCacheSize                    = 251658240                              {pd product} {ergonomic}
+     bool SegmentedCodeCache                       = true                                      {product} {ergonomic}
+   size_t SoftMaxHeapSize                          = 2147483648                             {manageable} {ergonomic}
+     bool UseCompressedClassPointers               = true                           {product lp64_product} {ergonomic}
+     bool UseCompressedOops                        = true                           {product lp64_product} {ergonomic}
+     bool UseG1GC                                  = true                                      {product} {ergonomic}
+     bool UseLargePagesIndividualAllocation        = false                                  {pd product} {ergonomic}
+
+Logging:
+Log output configuration:
+ #0: stdout all=warning uptime,level,tags
+ #1: stderr all=off uptime,level,tags
+
+Environment Variables:
+JAVA_HOME=C:\Program Files\Java\jdk-17
+PATH=C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.8\bin;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.8\libnvvp;C:\Program Files\Common Files\Oracle\Java\javapath;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Windows\System32\OpenSSH\;C:\Program Files\WireGuard\;C:\Program Files\Git\cmd;C:\Program Files\Docker\Docker\resources\bin;C:\Program Files\NVIDIA Corporation\Nsight Compute 2022.3.0\;C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common;C:\Program Files\NVIDIA Corporation\NVIDIA NvDLISR;C:\Users\apras\AppData\Local\Programs\Python\Python310\Scripts\;C:\Users\apras\AppData\Local\Programs\Python\Python310\;C:\Users\apras\AppData\Local\Programs\Python\Python311\Scripts\;C:\Users\apras\AppData\Local\Programs\Python\Python311\;C:\Users\apras\AppData\Local\Microsoft\WindowsApps;C:\Users\apras\AppData\Local\Programs\Microsoft VS Code\bin;C:\msys64\mingw64\bin;C:\Program Files\Java\jdk-17\bin;;C:\Program Files\JetBrains\CLion 2023.2.2\bin;;C:\Program Files\JetBrains\PyCharm 2023.2.1\bin;
+USERNAME=apras
+OS=Windows_NT
+PROCESSOR_IDENTIFIER=Intel64 Family 6 Model 165 Stepping 2, GenuineIntel
+TMP=C:\Users\apras\AppData\Local\Temp
+TEMP=C:\Users\apras\AppData\Local\Temp
+
+
+JNI global refs:
+JNI global refs: 0, weak refs: 0
+
+JNI global refs memory usage: 0, weak refs: 0
+
+OOME stack traces (most recent first):
+Classloader memory used:
+
+
+---------------  S Y S T E M  ---------------
+
+OS:
+ Windows 10 , 64 bit Build 19041 (10.0.19041.3393)
+OS uptime: 3 days 12:36 hours
+Hyper-V role detected
+
+CPU: total 8 (initial active 8) (4 cores per cpu, 2 threads per core) family 6 model 165 stepping 2 microcode 0xc8, cx8, cmov, fxsr, ht, mmx, 3dnowpref, sse, sse2, sse3, ssse3, sse4.1, sse4.2, popcnt, lzcnt, tsc, tscinvbit, avx, avx2, aes, erms, clmul, bmi1, bmi2, adx, fma, vzeroupper, clflush, clflushopt, hv
+Processor Information for all 8 processors :
+  Max Mhz: 2496, Current Mhz: 2496, Mhz Limit: 2496
+
+Memory: 4k page, system-wide physical 16221M (4551M free)
+TotalPageFile size 31978M (AvailPageFile size 242M)
+current process WorkingSet (physical memory assigned to process): 10M, peak: 10M
+current process commit charge ("private bytes"): 60M, peak: 316M
+
+vm_info: OpenJDK 64-Bit Server VM (17.0.8+7-b1000.8) for windows-amd64 JRE (17.0.8+7-b1000.8), built on 2023-08-04 by "builduser" with MS VC++ 16.10 / 16.11 (VS2019)
+
+END.

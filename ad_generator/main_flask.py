@@ -59,7 +59,8 @@ def dashboard():
     user_group_hashtags = ad.get_user_group_and_hashtags(ad.get_user_group_id(user_id))[0][0]
     available_ad_groups = ad.get_all_ad_groups()
     user_conf_id = ad.get_user_chat_id(user_id)
-
+    user_account = get_user_account()
+    user_account_data = f"{user_account[0]} {user_account[1]}"
     if user_id < 0:
         return redirect(url_for('index'))
 
@@ -70,7 +71,8 @@ def dashboard():
                            available_ad_groups=available_ad_groups,
                            group_images=all_group_images,
                            associated_image_ids=associated_image_ids,
-                           user_conf_id=user_conf_id)
+                           user_conf_id=user_conf_id,
+                           user_account_data=user_account_data)
 
 
 @app.route('/upload_image', methods=['POST'])
@@ -220,6 +222,25 @@ def admin_dashboard():
 
     return render_template('admin_dashboard.html')
 
+@app.route("/user_setup", methods=['POST', 'GET'])
+def user_setup():
+    return render_template("user_setup.html")
+@app.route('/submit_user_data', methods=['POST'])
+def submit_user_data():
+    data = request.get_json()
+    url = data.get('url')
+    word = data.get('word')
+    admin_code = data.get('adminCode')
+    print(admin_code)
+    # Check if the admin code is correct
+    if admin_code != ad.get_user_access_code(-1):
+        return jsonify(message='Invalid Admin Code'), 401
+
+    group = ad.add_user_group(url)
+    key = generate_key(word, SECRET_KEY)
+    ad.create_user(key, group)
+
+    return jsonify(message=f'Юзер создан! Код доступа: {key}')
 
 @app.route("/keys", methods=["GET", "POST"])
 def key_validator():
@@ -262,6 +283,26 @@ def login_vk():
         ad.update_user(session.get("user_id"), login, password, token)
         return jsonify(success=True)
 
+def get_user_account():
+    access_token = ad.get_user_token(session.get("user_id"))
+    if access_token:
+        response = requests.get(
+            'https://api.vk.com/method/users.get',
+            params={
+                'access_token': access_token,
+                'v': "5.131"
+            }
+        )
+        data = response.json()
+        if 'response' in data:
+            user = data['response'][0]
+            first_name = user['first_name']
+            last_name = user['last_name']
+            return [first_name, last_name]
+        else:
+            print("Error:", data['error']['error_msg'])
+    else:
+        return ["Не", " авторизовано!"]
 
 def generate_key(some_string, secret_key, length=12):
     sha_signature = hashlib.sha256((some_string + secret_key).encode()).digest()

@@ -32,6 +32,7 @@ class SimpleVKClient:
         link = "https://api.vk.com/method/photos.getUploadServer"
         data = {"album_id": album_id, "access_token": self.token, "v": self.vk_ver}
 
+
         upload_link = loads(requests.post(link, data=data).content)["response"][
             "upload_url"
         ]
@@ -60,7 +61,6 @@ class SimpleVKClient:
         }
 
         photo_id = loads(requests.post(link, data).content)
-        print(photo_id)
         return (
             "photo"
             + str(photo_id["response"][0]["owner_id"])

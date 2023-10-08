@@ -31,10 +31,10 @@ alice.send_message(f"[{datetime.now()}] Initiated {len(lifecycle_users)} users."
 ct = datetime.now()
 midnight = ct.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
 time_left = midnight - ct
+
 print(time_left)
 
 sleep(time_left.total_seconds())
-
 while True:
     users = ad.get_all_users()
     if len(users) != len(lifecycle_users.keys()):

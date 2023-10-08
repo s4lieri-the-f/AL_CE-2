@@ -1,0 +1,12 @@
+/logs/
+/.idea/
+/.vscode/
+/__pycache__/
+/handlers/__pycache__/
+/extensions/__pycache__/
+/assets/img/
+/assets/extensions/
+/handlers/adv_extension.py
+/extensions/text_assembler.py
+/extensions/advertiser.py
+/assets/config.ini

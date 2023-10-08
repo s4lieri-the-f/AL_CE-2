@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <title>Data Submission</title>
+</head>
+<body>
+    <h1>Добавление юзера</h1>
+    <form id="dataForm">
+        <label for="url">Ссылка на группу:</label>
+        <input type="text" id="url" name="url" required><br><br>
+
+        <label for="word">Слово для генерации ключа:</label>
+        <input type="text" id="word" name="word" required><br><br>
+
+        <label for="adminCode">Код доступа:</label>
+        <input type="password" id="adminCode" name="adminCode" required><br><br>
+
+        <button type="button" onclick="submitData()">Submit</button>
+    </form>
+    <p id="responseText"></p>
+
+    <script>
+        function submitData() {
+            const url = document.getElementById('url').value;
+            const word = document.getElementById('word').value;
+            const adminCode = document.getElementById('adminCode').value;
+
+
+
+            // Send data to Flask app
+            fetch('/submit_user_data', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    url: url,
+                    word: word,
+                    adminCode: adminCode
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('responseText').innerText = data.message;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+    </script>
+</body>
+</html>
